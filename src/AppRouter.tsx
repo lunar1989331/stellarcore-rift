@@ -4,7 +4,7 @@ import { BattleScreen } from './components/Battle/BattleScreen'
 
 export function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/battle" element={<BattleScreen />} />
