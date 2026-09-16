@@ -1,0 +1,64 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.darken {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.darkenOn {
+  opacity: 0.6;
+}
+
+.nameWrap {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.nameText {
+  font-size: clamp(24px, 4.4vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #ffd76a;
+  text-shadow:
+    0 0 16px rgba(255, 215, 106, 0.85),
+    0 0 40px rgba(255, 215, 106, 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.9);
+}
+
+.slashSvg {
+  position: absolute;
+  inset: 8% 15%;
+  width: 70%;
+  height: 84%;
+  overflow: visible;
+}
+
+.slashLine {
+  stroke: #f2f5ff;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 6px #cfe4ff) drop-shadow(0 0 16px #8fd6ff);
+}
+
+.burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46vw;
+  height: 46vw;
+  max-width: 560px;
+  max-height: 560px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 215, 106, 0.55), rgba(255, 215, 106, 0) 70%);
+}

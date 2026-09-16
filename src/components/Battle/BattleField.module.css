@@ -1,0 +1,161 @@
+.field {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #05060b;
+}
+
+/* 問題⑤：Lisa 的正式背景素材，兩張圖（預設／虛空裂切）疊放在同一個位置，opacity 由
+   BattleField.tsx 直接寫 inline style 控制淡入淡出（不用 class 切換，見那邊註解說明為什麼）。 */
+.sceneImage {
+  position: absolute;
+  inset: 0;
+  /* 跟 .sceneBg 同一個 z-index、靠 DOM 順序疊在它下面就好——.field 本身沒有自己的
+     stacking context（只有 position:relative，沒設 z-index），這裡如果用負的 z-index
+     反而會整層跑到 .field 自己的純色背景後面、完全被蓋住看不到（踩過這個坑，供之後參考）。 */
+  z-index: 0;
+  background-size: cover;
+  background-position: center 30%;
+  transition: opacity 0.5s ease;
+}
+
+.sceneBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* §4：全畫面鋪滿背景插圖＋輕微暗化濾鏡（亮度約 60–70%）——這層原本是唯一背景，
+     現在改成疊在照片上的暗化＋色調濾鏡，第三層漸層要有透明度才不會把照片全部蓋掉。 */
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(79, 163, 255, 0.16), transparent 60%),
+    radial-gradient(120% 60% at 50% 100%, rgba(255, 79, 109, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(10, 13, 24, 0.55) 0%, rgba(12, 14, 21, 0.4) 45%, rgba(18, 12, 20, 0.62) 100%);
+}
+
+.ringGlow {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 60vw;
+  height: 60vw;
+  max-width: 900px;
+  max-height: 900px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 215, 106, 0.15);
+  box-shadow:
+    0 0 80px 20px rgba(255, 215, 106, 0.05) inset,
+    0 0 40px rgba(79, 163, 255, 0.06);
+}
+
+.ruinColumnsTop,
+.ruinColumnsBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 22%;
+  background-repeat: repeat-x;
+  background-size: 60px 100%;
+  opacity: 0.35;
+}
+
+.ruinColumnsTop {
+  top: 0;
+  background-image: linear-gradient(
+    180deg,
+    rgba(79, 163, 255, 0.12),
+    transparent
+  );
+  mask-image: linear-gradient(180deg, black, transparent);
+}
+
+.ruinColumnsBottom {
+  bottom: 0;
+  background-image: linear-gradient(
+    0deg,
+    rgba(255, 79, 109, 0.1),
+    transparent
+  );
+  mask-image: linear-gradient(0deg, black, transparent);
+}
+
+.formations {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* 主人回報（2026-09-14）：Session 17 修好了「卡片互相重疊」，但引入兩個新問題——
+     ①敵方兩排＋我方兩排全部是 .formations 的平行子元素，只靠 justify-content 分配間距，
+     沒有任何機制保證敵方整體跟我方整體「剛好一半一半」，內容一多就把我方擠向技能列；
+     ②row 改成 flex:0 0 auto（不能壓縮）之後，只要 4 排＋分隔線的總高度超過 .field 實際
+     可用高度，多出來的部分沒地方去，只能被 .field 的 overflow:hidden 從畫面下緣切掉——
+     這正是「我方後排看起來消失了」的真正原因（DOM 裡其實還在，只是被裁到看不見，見
+     CLAUDE.md Session 18 的量測）。
+     這次的修法分兩部分：
+     A. 敵我分別包一層 .side（見 BattleField.tsx），各自 flex:1 1 0% 拿 .formations 一半
+        高度——不管兩邊內容多寡，天生對半分，不會再有一邊把另一邊擠壓縮小的狀況。
+     B. 把原本吃掉將近 110px 的「上 5.5%／下 3%（都是相對*寬度*算的百分比，跟視窗高度
+        完全無關）」框邊留白，改成用 vh 為單位的小 clamp()，加上把卡片本身跟卡片內部文字
+        區塊（UnitCard.module.css）的尺寸整體調小一截——兩者合計才能讓「敵後＋敵前」跟
+        「我前＋我後」各自在只拿到一半高度的情況下還放得下，不會被裁掉。 */
+  padding-top: clamp(4px, 1.6vh, 14px);
+  padding-bottom: clamp(4px, 1.4vh, 12px);
+  padding-left: clamp(84px, 9.5vw, 136px);
+  padding-right: clamp(52px, 6.5vw, 72px);
+}
+
+/* 項目 A 修正：敵／我半場——各自拿 .formations 扣掉分隔線後剩餘高度的一半，內部前後排
+   再用 space-evenly 分配（見下面 .row 的說明，前後排本身不能被壓縮到比卡片還矮，但半場
+   之間永遠對半分，不會一邊擠壓另一邊）。 */
+.side {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  /* space-evenly 只分配「內容用剩的空間」——半場剛好被塞滿、完全沒有剩餘空間時，
+     前後排會緊貼在一起（量測到 0px）。這裡另外用 gap 訂一個保證最小值，不管 space-evenly
+     算出來的剩餘空間夠不夠，前後排之間永遠至少有這麼多間距。 */
+  gap: clamp(3px, 0.5vh, 6px);
+  overflow: hidden;
+}
+
+/* 四個橫排（敵後・敵前・我前・我後，由上到下）。UI 改善規格書 v2.0 項目 A：
+   前排卡片較大；用 align-items: flex-end 讓同一排卡片底部對齊在同一水平線（不用 Y 軸
+   位移／不同 flex 比例讓卡片各自漂在不同高度），景深感改由後排的 margin-bottom（往上推
+   一點）＋較小尺寸（UnitCard.module.css 的 .back 寬度）表現，不使用 transform:scale——
+   UnitCard 外層的 motion.div 本來就用 framer-motion 的 animate.scale 控制合體時的 1.1
+   倍縮放，CSS class 再疊一個 transform 只會被 inline style 蓋掉不會生效（Session 15
+   踩過同樣的 filter/grayscale 坑）。
+   `flex: 0 0 auto`：row 的高度完全由裡面的卡片內容決定，永遠不會被壓縮到比卡片還矮——
+   前排本來就比後排的卡片大（UnitCard.module.css 的 .front/.back 寬度不同），視覺上前排
+   自然比後排占更高的空間，不需要額外用 flex-grow 比例去逼近這個效果。 */
+.row {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(6px, 1.2vw, 18px);
+}
+
+/* 橫式卡片改版規格書 v1.0 · I：卡片變寬（上限 340px）之後，原本為了直式窄卡片訂的
+   12–32px 間距在兩張並排時會把整排推得太寬，改用規格書給的 16px 基準（同樣保留 clamp
+   讓小視窗縮得下）。後排只有一張、置中，間距在 3v3 下其實用不到，維持設定以防隊伍規模改變。 */
+.backRow {
+  gap: clamp(10px, 1.4vw, 16px);
+  margin-bottom: clamp(2px, 0.5vh, 6px);
+}
+
+.frontRow {
+  gap: clamp(10px, 1.4vw, 16px);
+}
+
+/* 項目 A-④：敵我分隔線——戰場正中央一條細金線，敵方前排與我方前排之間。 */
+.divider {
+  flex: 0 0 auto;
+  width: 70%;
+  height: 1px;
+  margin: clamp(2px, 0.8vh, 8px) auto;
+  background: linear-gradient(to right, transparent, rgba(200, 180, 100, 0.4), transparent);
+}

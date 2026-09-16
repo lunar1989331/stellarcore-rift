@@ -1,0 +1,201 @@
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #10131c;
+  border: 1px solid var(--faction-color, #444);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 12px 30px -12px var(--faction-glow, rgba(0, 0, 0, 0.6));
+  color: #eef1f7;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', sans-serif;
+  cursor: default;
+}
+
+.imageWrap {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #05070d;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imageWrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 7, 13, 0) 35%, rgba(5, 7, 13, 0.92) 100%);
+}
+
+.badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 2;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(5, 7, 13, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.factionBadge {
+  border-color: var(--faction-color, #444);
+  color: var(--faction-color, #fff);
+}
+
+.rarity {
+  position: absolute;
+  bottom: 68px;
+  left: 12px;
+  z-index: 2;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #ffd76a;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.nameBlock {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.nameEn {
+  margin: 2px 0 0;
+  font-size: 11px;
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+
+.body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.role {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.barLabel {
+  font-size: 11px;
+  font-weight: 700;
+  width: 26px;
+  opacity: 0.8;
+}
+
+.barTrack {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38d996, #23a1ff);
+  transition: width 0.4s ease;
+}
+
+.barValue {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+  min-width: 62px;
+  text-align: right;
+}
+
+.spRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spPips {
+  display: flex;
+  gap: 5px;
+}
+
+.pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--faction-color, #777);
+  background: transparent;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pipFilled {
+  background: var(--faction-color, #fff);
+  box-shadow: 0 0 8px var(--faction-glow, rgba(255, 255, 255, 0.5));
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 4px;
+  font-size: 11px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.statLabel {
+  opacity: 0.6;
+}
+
+.statValue {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 12px;
+  opacity: 0.5;
+}

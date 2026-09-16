@@ -1,0 +1,314 @@
+.bar {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 20px);
+  height: 100%;
+  padding: 8px clamp(14px, 1.8vw, 26px) 8px clamp(20px, 2vw, 30px);
+  background: linear-gradient(180deg, rgba(6, 7, 13, 0.92), rgba(4, 5, 9, 0.96));
+  border-top: 1px solid rgba(255, 215, 106, 0.18);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* 項目 C-③：對方回合時整條技能列加不可互動遮罩——單顆按鈕原本就會因為 busy 個別 disabled
+   （見 ActionBar 既有的 disabled 邏輯），這裡是額外的「一眼就看出現在不能碰」視覺提示。 */
+.enemyPhase {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: grayscale(60%);
+}
+
+/* 左下角裝飾文字，低透明度直向小字。 */
+.awakenLabel {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 7px;
+  letter-spacing: 0.3em;
+  color: rgba(200, 175, 90, 0.3);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  pointer-events: none;
+  user-select: none;
+}
+
+.buttons {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(6px, 1vw, 14px);
+  height: 100%;
+  min-width: 0;
+}
+
+/* 坐騎合體獨立於技能①②③・普通攻擊 4 欄之外，自己一個固定寬度的欄位。 */
+.mountSlot {
+  flex: 0 0 clamp(72px, 8vw, 112px);
+  height: 100%;
+}
+
+.mountSlot .skillBtn {
+  height: 100%;
+}
+
+.slotEmpty {
+  visibility: hidden;
+}
+
+.skillBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 12px);
+  height: 100%;
+  padding: 6px clamp(6px, 1vw, 12px);
+  border-radius: 10px;
+  border: 1.5px solid var(--accent, rgba(255, 255, 255, 0.25));
+  background: rgba(255, 255, 255, 0.03);
+  color: #eef1f7;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.skillBtn:not(.disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 14px var(--accent, rgba(255, 255, 255, 0.3));
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* 大圓形技能圖示——邊框跟隨技能屬性色（--accent），鎖定/普攻另外覆寫。 */
+.iconCircle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(32px, 4.2vw, 52px);
+  height: clamp(32px, 4.2vw, 52px);
+  border-radius: 50%;
+  border: 2px solid var(--accent, currentColor);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--accent, rgba(255, 255, 255, 0.75));
+  font-size: clamp(13px, 1.8vw, 22px);
+  line-height: 1;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  font-size: clamp(9.5px, 1.15vw, 14px);
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cost {
+  font-size: clamp(8px, 0.95vw, 11px);
+  color: #f5c518;
+  white-space: nowrap;
+}
+
+/* 效果說明——UI 全面升級規格書 v1.0 項目 C 明確要求「常態顯示」，取代 v2.0 那版的 hover 展開。 */
+.desc {
+  font-size: clamp(7.5px, 0.85vw, 10px);
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.descEn {
+  font-size: clamp(7px, 0.8vw, 9px);
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.descMuted {
+  font-size: clamp(7.5px, 0.85vw, 10px);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.disabled {
+  opacity: 0.45;
+  cursor: default;
+  filter: grayscale(0.6);
+}
+
+.locked {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #9aa1b2;
+  cursor: not-allowed;
+}
+
+.locked .iconCircle {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* 普通攻擊——白色發光邊框，比一般技能按鈕更醒目。 */
+.normal {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.normal:not(.disabled):hover {
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+.normal .iconCircle {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 無道具佔位——目前沒有道具系統，純視覺占位，不可互動。 */
+.noItemSlot {
+  flex: 0 0 clamp(60px, 6.6vw, 92px);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px clamp(6px, 1vw, 10px);
+  border-radius: 10px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  opacity: 0.4;
+}
+
+.noItemIcon {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.mountBtn {
+  position: relative;
+  border-color: #ffd76a;
+  overflow: hidden;
+}
+
+.mountBtn .iconCircle {
+  color: #ffd76a;
+}
+
+.mountedLocked {
+  border-color: #b98cff;
+  background: rgba(185, 140, 255, 0.08);
+}
+
+.mountDead {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #9aa1b2;
+  filter: grayscale(0.6);
+}
+
+.mountCharging {
+  border-color: rgba(255, 215, 106, 0.45);
+  cursor: default;
+}
+
+.mountReady {
+  border-color: #ffd76a;
+  box-shadow: 0 0 18px rgba(255, 215, 106, 0.55);
+  animation: mountReadyGlow 1.2s ease-in-out infinite;
+}
+
+@keyframes mountReadyGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 106, 0.4); }
+  50% { box-shadow: 0 0 22px rgba(255, 215, 106, 0.85); }
+}
+
+.mountChargeFill {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: conic-gradient(#ffd76a calc(var(--charge, 0) * 360deg), transparent 0deg);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.mountReadyPulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  box-shadow: 0 0 16px 4px rgba(255, 215, 106, 0.6);
+  pointer-events: none;
+}
+
+/* SP 圓盤——藍白發光漸層圓環＋右側標題文字。 */
+.spDial {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: clamp(8px, 1.2vw, 18px);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+}
+
+.spDialRing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: clamp(54px, 6vw, 88px);
+  height: clamp(54px, 6vw, 88px);
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background:
+    linear-gradient(rgba(10, 15, 40, 0.92), rgba(10, 15, 40, 0.92)) padding-box,
+    linear-gradient(135deg, #7dd3fc, #3b82f6, #1e3a8a) border-box;
+  box-shadow:
+    0 0 20px rgba(96, 165, 250, 0.5),
+    inset 0 0 15px rgba(96, 165, 250, 0.15);
+  flex-shrink: 0;
+}
+
+.spDialLabel {
+  font-size: clamp(8px, 0.85vw, 10px);
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  color: rgba(147, 197, 253, 0.85);
+}
+
+.spDialValue {
+  font-size: clamp(14px, 1.9vw, 26px);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(96, 165, 250, 0.8);
+  line-height: 1;
+}
+
+.spDialText {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .spDialText {
+    display: block;
+    text-align: right;
+  }
+}
+
+.gameTitle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffd76a;
+  letter-spacing: 0.04em;
+}
+
+.gameTagline {
+  margin-top: 2px;
+  font-size: 9px;
+  opacity: 0.6;
+}

@@ -1,0 +1,30 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei',
+    sans-serif;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(79, 163, 255, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(255, 79, 109, 0.08), transparent 60%),
+    #070910;
+  color: #eef1f7;
+}
+
+a {
+  color: #7db8ff;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+}

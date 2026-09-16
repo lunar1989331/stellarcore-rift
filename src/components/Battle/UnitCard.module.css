@@ -1,0 +1,524 @@
+/* 橫式卡片（改版規格書 v1.0 · B）：左立繪右資訊、寬高比 5:2。
+   規格書給的是固定 340×136px；這裡改用 clamp() 寬度 ＋ aspect-ratio 維持同樣比例——
+   專案從 Session 15 起所有卡片尺寸都是響應式的（理由見 CLAUDE.md Session 19），寫死 340px
+   在 1024px 這種視窗下，前排兩張並排（680px＋間距）會超出 .formations 扣掉左右留白後的可用
+   寬度。上限就是規格書的 340px。 */
+.card {
+  position: relative;
+  width: clamp(190px, 24vw, 340px);
+  aspect-ratio: 5 / 2;
+  border-radius: 8px;
+  /* overflow 維持 visible：飄字傷害數字（.floatingLayer）跟「當前行動」標籤要能飄出卡片外，
+     立繪的裁切改由 .portraitWrap 自己的 overflow:hidden 負責（規格書 B 把 overflow:hidden
+     放在卡片上，但那樣會把 Session 15 做的飄字數字整個裁掉）。 */
+  overflow: visible;
+  background: rgba(8, 10, 20, 0.88);
+  border: 1.5px solid var(--faction-color, #666);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 4px 20px rgba(0, 0, 0, 0.6);
+  color: #eef1f7;
+  cursor: default;
+  user-select: none;
+  transform-origin: center bottom;
+}
+
+/* 後排略小。規格書 I 寫的是 transform: scale(0.9)，但這裡刻意改用寬度縮小達成同樣效果——
+   UnitCard 外層 motion.div 用 framer-motion 的 animate.scale 控制合體時的放大，CSS 再疊一個
+   transform 會被 inline style 蓋掉、根本不生效（Session 15／16 已經踩過兩次同樣的坑）。
+   寬度縮小搭配 aspect-ratio，高度會等比跟著縮，視覺結果跟 scale 一致。 */
+.front {
+  width: clamp(190px, 24vw, 340px);
+}
+
+/* 縮放倍率取規格書 I 允許區間的上緣 0.95（原文：「若 0.9 縮太小導致文字難讀，可調整至
+   0.92–0.95」）——實測 0.9 時後排卡片放不下「莫德雷斯·黑鐵」這種 7 字名字，仍會 ellipsis，
+   而規格書驗證清單第 2 條要求所有名稱完整顯示，名稱可讀優先於後排的景深差異。 */
+.back {
+  width: clamp(182px, 22.8vw, 323px);
+  opacity: 0.92;
+}
+
+/* 敵我識別規格書 v1.0 · 項目 B：卡片左側固定的藍（我方）／紅（敵方）識別條，跟陣營邊框色
+   彼此獨立——玩家選渾沌陣營時，敵我雙方的 --faction-color 都是深紅（見 UnitCard.tsx 的
+   FACTION_COLORS），六張卡光看邊框顏色完全分不出誰是誰，這條色條提供一個不受陣營影響、
+   永遠「我方=藍／敵方=紅」的第二識別管道。用 ::before 疊在立繪左緣，z-index 只需要蓋過
+   `.portrait`（沒有設 z-index、預設在文件流層）即可，不用蓋過準星／KO 遮罩這類真正的互動
+   狀態指示（those 都是 z-index 4 以上）。 */
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  z-index: 2;
+  border-radius: 7px 0 0 7px;
+  pointer-events: none;
+}
+
+.playerUnit::before {
+  background: linear-gradient(to bottom, rgba(147, 197, 253, 0.9), rgba(96, 165, 250, 0.6));
+}
+
+.enemyUnit::before {
+  background: linear-gradient(to bottom, rgba(252, 165, 165, 0.9), rgba(239, 68, 68, 0.6));
+}
+
+.current {
+  border-color: rgba(245, 197, 24, 0.9);
+  box-shadow:
+    0 0 16px rgba(245, 197, 24, 0.5),
+    inset 0 0 6px rgba(245, 197, 24, 0.15);
+  animation: activeCardPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes activeCardPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 16px rgba(245, 197, 24, 0.5), inset 0 0 6px rgba(245, 197, 24, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(245, 197, 24, 0.8), inset 0 0 10px rgba(245, 197, 24, 0.25);
+  }
+}
+
+/* 項目 D：陣亡演出——包住卡片所有內容（floatingLayer 除外）的內層 wrapper，同時也是
+   「左立繪＋右資訊」這個橫向 flex 的容器。 */
+.shakeInner {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* F：陣亡的灰階＋半透明。放在內層 wrapper 而不是交給 UnitCard.tsx 的 framer-motion
+   animate——實測 framer 在 alive:true→false 時不會把 inline filter 更新成 grayscale(100%)
+   （詳見 UnitCard.tsx 那段註解），改用 CSS class 直接作用在這個 framer 不會去寫 inline
+   style 的元素上，就不會有「inline style 蓋過 class」或「framer 不更新」的問題。
+   KO 遮罩本身刻意不在這層裡面，才不會連紅色的「KO」字一起被灰掉。 */
+.deadInner {
+  /* 用 saturate(0) 而不是 grayscale(100%)：視覺結果相同，但建置時的 CSS 壓縮器
+     （lightningcss）會把 grayscale(100%) 縮寫成無參數的 grayscale()，實測那個形式在瀏覽器
+     computed style 讀出來是 grayscale(0)（等於沒有效果）。saturate 的預設值是 1，壓縮器
+     沒辦法把 saturate(0) 的參數拿掉，不會有同樣的問題。
+     另外刻意不加 transition——實測加了之後，這兩個屬性的 CSSTransition 會一直停在
+     playState:"running" 卻永遠不前進（戰鬥期間卡片每一幀都在 re-render，transition 被反覆
+     重啟），computed 值就永遠卡在起始值 grayscale(0)/opacity:1，陣亡卡片完全不會變灰。 */
+  filter: saturate(0);
+  opacity: 0.55;
+}
+
+/* === C：左側立繪區 === */
+.portraitWrap {
+  position: relative;
+  width: 40%;
+  height: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #05070d;
+  border-radius: 7px 0 0 7px;
+}
+
+.portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 立繪多半是全身直式構圖，橫式卡片裁切時優先保留頭部與上半身。 */
+  object-position: center top;
+  display: block;
+}
+
+.portraitFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: clamp(20px, 2.6vw, 34px);
+  font-weight: 700;
+  color: var(--faction-color, #999);
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), transparent 70%);
+}
+
+/* 立繪右緣漸層，讓立繪自然融入右側資訊區的底色。 */
+.portraitShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 55%, rgba(8, 10, 20, 0.92) 100%);
+  pointer-events: none;
+}
+
+.statusRow {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  z-index: 3;
+}
+
+.statusIcon {
+  font-size: clamp(9px, 1vw, 13px);
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+}
+
+/* === D：右側資訊區 === */
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(2px, 0.5vh, 5px);
+  padding: clamp(6px, 1vh, 10px) clamp(8px, 0.9vw, 12px) clamp(6px, 1vh, 10px) clamp(5px, 0.6vw, 8px);
+}
+
+/* D-1：騎士名稱——橫式資訊區寬度足夠，7 字名字（伊格尼斯·業火）在這個字級下完整顯示，
+   ellipsis 幾乎不會觸發。右邊留出 padding 避開右上角的前衛／後衛標籤。 */
+.name {
+  /* 上限維持規格書給的 18px；中段值從 1.35vw 收到 1.15vw——實測 1.35vw 在 1024px 視窗下，
+     較窄的後排卡片仍放不下 7 字名字（需 97px、只有 86px 可用）。 */
+  font-size: clamp(10px, 1.15vw, 18px);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  /* 右側保留給絕對定位的前衛／後衛標籤的空間，避免長名字鑽到標籤底下。 */
+  padding-right: clamp(28px, 3vw, 42px);
+}
+
+/* D-2：戰鬥類型列 */
+.typeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.typeBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: clamp(8px, 0.85vw, 11px);
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+}
+
+.typeIcon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.compass {
+  width: clamp(16px, 2vw, 28px);
+  height: clamp(16px, 2vw, 28px);
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.55;
+  color: var(--faction-color, #888);
+}
+
+/* D-3：星核力列 */
+.stellarRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: clamp(8px, 0.85vw, 11px);
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
+
+.starGold {
+  color: #ffd76a;
+}
+
+.stellarLabel {
+  letter-spacing: 0.02em;
+}
+
+.stellarDots {
+  display: flex;
+  gap: 3px;
+}
+
+.stellarDot {
+  width: clamp(5px, 0.6vw, 8px);
+  height: clamp(5px, 0.6vw, 8px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+/* 已充能的圓點：底色由 UnitCard.tsx 依騎士屬性帶 inline style（規格書 D-3 的屬性色表已經
+   存在於 battleTheme.ts 的 ATTR_COLORS，不另外複製一份）。 */
+.stellarDotOn {
+  box-shadow: 0 0 5px currentColor;
+}
+
+/* D-4：HP 列——示意圖是「HP ▬▬▬ 10000/10000」同一行 */
+.hpRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hpLabel {
+  font-size: clamp(7px, 0.75vw, 10px);
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.hpTrack {
+  flex: 1;
+  min-width: 0;
+  height: clamp(4px, 0.5vw, 6px);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.hpFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.hpNumbers {
+  flex: 0 0 auto;
+  font-size: clamp(7px, 0.75vw, 10px);
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.7);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* === E：前衛／後衛標籤 === */
+.rowBadge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 4;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: clamp(7px, 0.72vw, 10px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rowBadgeFront {
+  background: rgba(59, 130, 246, 0.25);
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  color: #93c5fd;
+}
+
+.rowBadgeBack {
+  background: rgba(100, 100, 100, 0.25);
+  border: 1px solid rgba(160, 160, 160, 0.4);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* === 當前行動的選中框 === */
+.currentTag {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #ffd76a;
+  color: #241a05;
+  font-size: clamp(7px, 0.72vw, 9px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  box-shadow: 0 0 8px rgba(255, 215, 106, 0.7);
+  z-index: 5;
+}
+
+.currentGlowFrame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #ffd76a;
+  filter: drop-shadow(0 0 4px #ffd76a);
+}
+
+.corner[data-pos='tl'] {
+  top: 2px;
+  left: 2px;
+  border-right: none;
+  border-bottom: none;
+}
+.corner[data-pos='tr'] {
+  top: 2px;
+  right: 2px;
+  border-left: none;
+  border-bottom: none;
+}
+.corner[data-pos='bl'] {
+  bottom: 2px;
+  left: 2px;
+  border-right: none;
+  border-top: none;
+}
+.corner[data-pos='br'] {
+  bottom: 2px;
+  right: 2px;
+  border-left: none;
+  border-top: none;
+}
+
+/* === 坐騎合體疊影（§8）——疊在左側立繪區上 === */
+.mounted {
+  z-index: 5;
+}
+
+.mountGhost {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: blur(1.5px) saturate(1.2);
+  z-index: 1;
+  mask-image: radial-gradient(ellipse at center, black 55%, transparent 90%);
+}
+
+.mountRing {
+  position: absolute;
+  inset: -5px;
+  border-radius: 12px;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.mountRing span {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: conic-gradient(from 0deg, #ffd76a, #4fa3ff, #b98cff, #ffd76a);
+  filter: blur(4px);
+  opacity: 0.75;
+  animation: mountSpin 5s linear infinite;
+}
+
+@keyframes mountSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.floatingLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+@keyframes unitCardShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* === F：KO 陣亡遮罩 === */
+.koOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: inherit;
+}
+
+.koLabel {
+  font-size: clamp(16px, 2.2vw, 26px);
+  font-weight: 900;
+  color: #ef4444;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+/* === 項目 C：瞄準模式的準星疊層 === */
+.targetReticle {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.28);
+  border: 2px solid rgba(239, 68, 68, 0.85);
+  border-radius: inherit;
+  animation: reticlePulse 1s ease-in-out infinite;
+}
+
+.reticleMark {
+  font-size: clamp(16px, 2.2vw, 28px);
+  color: #fff;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
+}
+
+.reticleHint {
+  font-size: clamp(8px, 0.8vw, 11px);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+
+@keyframes reticlePulse {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.targetable {
+  cursor: pointer;
+}
+
+.targetable:hover .reticleMark {
+  transform: scale(1.1);
+}
+
+/* .dimmed 本身沒有樣式——brightness 已經跟 grayscale 一起寫進 UnitCard.tsx 的 framer-motion
+   animate.filter（inline style，見那邊註解），CSS class 在這裡只當作語意標記。 */

@@ -1,0 +1,78 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #05060b;
+  color: #eef1f7;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei',
+    sans-serif;
+}
+
+.topBarWrap {
+  flex: 0 0 auto;
+  height: clamp(38px, 6.5vh, 60px);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.actionBarWrap {
+  flex: 0 0 auto;
+  height: clamp(88px, 15vh, 132px);
+}
+
+.resultBanner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 48px;
+  border-radius: 18px;
+  background: rgba(6, 7, 13, 0.9);
+  border: 1px solid rgba(255, 215, 106, 0.4);
+  box-shadow: 0 0 60px rgba(255, 215, 106, 0.25);
+  text-align: center;
+}
+
+.resultTitle {
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: 800;
+  color: #ffd76a;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 16px rgba(255, 215, 106, 0.7);
+}
+
+.resultMeta {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.resultBtn {
+  margin-top: 6px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 215, 106, 0.5);
+  background: rgba(255, 215, 106, 0.12);
+  color: #ffd76a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resultBtn:hover {
+  background: rgba(255, 215, 106, 0.22);
+}
