@@ -6,6 +6,7 @@
 //   Q11 — 補齊格拉托斯·隕鐵完整資料（渾沌第 9 位）
 //   Q12 — frael / gratos 的 mount 欄位指到 mounts.ts 的坐騎
 
+import { BOSS_KNIGHTS } from './bosses'
 import type { Knight } from './types'
 
 export const KNIGHTS: readonly Knight[] = [
@@ -17,7 +18,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'independent',
     attr: '融合型·未知',
     coreAttr: 'fusion',
-    image: '紫月下的虛空騎士.png', // ASSET_MAP v1.1 校正（原為 Celestial Mecha Knight Among Ruins.png，該圖已改給艾索）
+    image: '銀翼·虛空.png', // 2026-09-19 素材重新命名（原為 紫月下的虛空騎士.png）
     maxHp: 5500, // def 55 × 100
     atk: 78,
     def: 55,
@@ -34,7 +35,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'independent',
     attr: '融合型·魔法系',
     coreAttr: 'fusion',
-    image: '星穹神殿的機械法師.png', // ASSET_MAP v1.1 校正（原為 紫金魔鎧的星環聖殿.png，該圖已無對應騎士）
+    image: '澤菲爾·秘典.png', // 藍銀長袍法師，秘典守護者立繪
     maxHp: 7000, // def 70 × 100
     atk: 65,
     def: 70,
@@ -42,6 +43,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 98,
     role: '秘典守護者',
     rarity: 5,
+    mount: 'dianyu', // 坐騎合體規格書 v1.0
   },
   {
     id: 'aiso',
@@ -50,7 +52,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'independent',
     attr: '融合型·術式系',
     coreAttr: 'fusion',
-    image: 'Celestial Mecha Knight Among Ruins.png', // ASSET_MAP v1.1 校正（原為 星穹神殿的機械法師.png，該圖已改給澤菲爾）
+    image: '艾索·星紋.png', // 紫金重甲騎士，星紋解析者立繪
     maxHp: 6500, // def 65 × 100
     atk: 60,
     def: 65,
@@ -58,6 +60,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 96,
     role: '解析者',
     rarity: 5,
+    mount: 'dianyuan', // 坐騎合體規格書 v1.0
   },
 
   // ── 守護騎士陣營（9位）────────────────────────
@@ -76,6 +79,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 95,
     role: '守護主將',
     rarity: 5,
+    mount: 'senguan', // 坐騎合體規格書 v1.0
   },
   {
     id: 'elixia',
@@ -92,6 +96,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 90,
     role: '治癒全能',
     rarity: 5,
+    mount: 'shenghuan', // 坐騎合體規格書 v1.0
   },
   {
     id: 'laros',
@@ -159,6 +164,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 76,
     role: '深海防守',
     rarity: 5,
+    mount: 'chaoyuan', // 坐騎合體規格書 v1.0
   },
   {
     id: 'frael',
@@ -192,6 +198,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 65,
     role: '鐵壁反傷',
     rarity: 5,
+    mount: 'tiebi', // 坐騎合體規格書 v1.0
   },
   {
     id: 'sardin',
@@ -208,6 +215,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 72,
     role: '傷害轉移盾',
     rarity: 5,
+    mount: 'xingyi', // 坐騎合體規格書 v1.0
   },
 
   // ── 渾沌騎士陣營（9位；含格拉托斯，資料仍缺 — 見 CLAUDE.md Q11）────
@@ -226,6 +234,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 99,
     role: '大反派·最終BOSS',
     rarity: 5,
+    mount: 'canglong', // 坐騎合體規格書 v1.0
   },
   {
     id: 'magnos',
@@ -276,6 +285,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 86,
     role: '詛咒對鏡',
     rarity: 5,
+    mount: 'mingyi', // 坐騎合體規格書 v1.0
   },
   {
     id: 'mordres',
@@ -292,6 +302,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 80,
     role: '戰略控場',
     rarity: 5,
+    mount: 'tieshi', // 坐騎合體規格書 v1.0
   },
   {
     id: 'viel',
@@ -308,6 +319,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 82,
     role: '多段速攻',
     rarity: 5,
+    mount: 'anshi', // 坐騎合體規格書 v1.0
   },
   {
     id: 'holka',
@@ -324,6 +336,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 90,
     role: '過載爆發',
     rarity: 5,
+    mount: 'lietian', // 坐騎合體規格書 v1.0
   },
   {
     id: 'seres',
@@ -340,6 +353,7 @@ export const KNIGHTS: readonly Knight[] = [
     starcore: 93,
     role: '情報控制',
     rarity: 5,
+    mount: 'dianlie', // 坐騎合體規格書 v1.0
   },
   {
     id: 'gratos',
@@ -366,7 +380,8 @@ export const KNIGHTS_BY_ID: Record<string, Knight> = Object.fromEntries(
 )
 
 export function getKnight(id: string): Knight | undefined {
-  return KNIGHTS_BY_ID[id]
+  // 世界級 Boss（永恆）不在名冊裡，但戰鬥畫面／引擎共用這個查表——見 data/bosses.ts。
+  return KNIGHTS_BY_ID[id] ?? BOSS_KNIGHTS[id]
 }
 
 export const KNIGHTS_BY_FACTION = {

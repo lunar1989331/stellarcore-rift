@@ -15,7 +15,13 @@ declare global {
   }
 }
 
-const SCRIPT_SRC = '/particles.js'
+// 順手修掉一個既有 bug（2026-09-19 排查招式動畫影片路徑時發現）：這個專案的 vite.config.ts
+// 設定 base:'/stellarcore-rift/'，寫死 '/particles.js' 不會被 Vite 轉換，瀏覽器會拿它當
+// 網站真正的根路徑去要，跟 base 前綴無關，一直是 404（開著的 dev server 從很早的 session
+// 就開始默默吃這個錯誤，沒有人注意到——星空粒子背景本來就是裝飾性效果，載入失敗不影響
+// 戰鬥功能，才會一直沒被發現）。改用 import.meta.env.BASE_URL 前綴，兩種環境都會正確解析
+// 成 /stellarcore-rift/particles.js。
+const SCRIPT_SRC = `${import.meta.env.BASE_URL}particles.js`
 let scriptLoadPromise: Promise<void> | null = null
 
 function loadParticlesScript(): Promise<void> {

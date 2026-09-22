@@ -76,3 +76,27 @@
 .resultBtn:hover {
   background: rgba(255, 215, 106, 0.22);
 }
+
+/* 永恆的聖域通關獎勵：星核君臨碎片 */
+.resultReward {
+  margin: 10px 0 4px;
+  padding: 8px 14px;
+  border: 1px solid rgba(192, 132, 252, 0.7);
+  border-radius: 8px;
+  background: rgba(60, 26, 110, 0.55);
+  box-shadow: 0 0 16px rgba(192, 132, 252, 0.4);
+  max-width: 360px;
+}
+
+.rewardTitle {
+  color: #e9d5ff;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.rewardDesc {
+  margin-top: 4px;
+  color: #d8b4fe;
+  font-size: 12px;
+  line-height: 1.5;
+}

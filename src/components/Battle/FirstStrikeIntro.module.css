@@ -1,0 +1,42 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 4, 10, 0.78);
+  cursor: default;
+  /* 遮罩吃掉所有點擊，演出期間玩家無法操作底下的戰場與技能列 */
+  pointer-events: auto;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2vh, 22px);
+}
+
+.shard {
+  width: clamp(140px, 28vh, 300px);
+  height: clamp(140px, 28vh, 300px);
+  object-fit: contain;
+  filter: drop-shadow(0 0 24px rgba(255, 220, 140, 0.55));
+}
+
+.caption {
+  font-size: clamp(20px, 3.4vh, 34px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.guardian {
+  color: #7cb4ff;
+  text-shadow: 0 0 14px rgba(96, 165, 250, 0.75);
+}
+
+.chaos {
+  color: #ff4d5e;
+  text-shadow: 0 0 14px rgba(239, 68, 68, 0.75);
+}

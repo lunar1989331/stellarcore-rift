@@ -103,6 +103,8 @@ export interface Skill {
    * lifeStealDoubled / reflectShieldBoost。
    */
   mountBonus?: Record<string, unknown>
+  /** 坐騎合體後才顯示的強化名稱（例如「星冠王臨」）；合體前顯示原本的 name。由 mergeMountSkills 依 overlay.name 掛上。 */
+  mountName?: string
   /** UI 改善規格書 v2.0 項目 B：技能按鈕 hover 展開的簡短效果說明（20 字以內）。 */
   effectSummary?: string
   /** 項目 B：hover 展開的分類標籤，決定色塊顏色（見 ActionBar 的 TAG_STYLE）。 */

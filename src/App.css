@@ -184,3 +184,47 @@
   margin-top: 18px;
   justify-items: center;
 }
+
+/* 首頁按鈕群：一般對戰模式（金）在上，永恆的聖域（深紫）在其下 */
+.battleLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.battleLinks .battleLink {
+  margin-top: 14px;
+}
+
+.sanctuaryLink {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 26px;
+  border-radius: 14px;
+  border: 1px solid #c084fc;
+  background: #3d1a6e;
+  color: #c084fc;
+  text-decoration: none;
+  box-shadow: 0 0 16px rgba(192, 132, 252, 0.4), inset 0 0 12px rgba(192, 132, 252, 0.15);
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.sanctuaryLink:hover {
+  background: #4b2287;
+  box-shadow: 0 0 26px rgba(192, 132, 252, 0.7), inset 0 0 14px rgba(192, 132, 252, 0.25);
+}
+
+.sanctuaryLinkTitle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sanctuaryLinkSub {
+  font-size: 11px;
+  opacity: 0.8;
+  letter-spacing: 0.08em;
+}

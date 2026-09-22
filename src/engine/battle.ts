@@ -32,6 +32,7 @@ import {
   type SkillEffect,
 } from '../data/skills'
 import { getFusedMount, MOUNT_HP_RATIO, type Mount } from '../data/mounts'
+import { BOSS_SKILL_IDS, type BossConfig } from '../data/bosses'
 import { getAttrMultiplier } from './attributes'
 import { isStub, noteStub } from './effects'
 import {
@@ -68,6 +69,27 @@ import {
 } from './resonance'
 
 export type Side = 'ally' | 'enemy'
+
+/**
+ * 永恆的聖域（規格書 4）：世界級 Boss 的執行期狀態，只掛在 Boss 單位上（config.boss 指定）。
+ * shield*：星核王盾獨立 HP，先破盾才傷本體；phase 1→2 由「合體詠唱」預警回合銜接。
+ */
+export interface BossRuntime {
+  phase: 1 | 2
+  shieldHp: number
+  shieldMax: number
+  shieldActive: boolean
+  /** 合體詠唱預警回合：Boss 下一次行動改成「星核共鳴」，該回合結束才合體。 */
+  chanting: boolean
+  chantActed: boolean
+  /** 廢墟重生・聖域版（第二階段限一次）。 */
+  reviveUsed: boolean
+  /** 聖域 HP 池（合體後才有意義；廢墟重生消耗它的一半）。 */
+  realmHp: number
+  realmMaxHp: number
+  /** 視覺體型倍率（第一階段 1、第二階段 3）。 */
+  sizeMult: number
+}
 
 export interface Combatant {
   uid: string
@@ -131,6 +153,8 @@ export interface Combatant {
   mountFusedOnce: boolean
   /** 合體攻擊加成（passiveShare.atkBonus 具體化） */
   mountAtkBonus: number
+  /** 合體後治癒量加成（加法） */
+  mountHealBonus: number
   /** 合體速度加成（固定值；v3 jadegryphon spdBonusFlat / moonstagg spdBonusRatio） */
   mountSpdBonus: number
   /** 吸血率額外加成（v3 manticore） */
@@ -147,6 +171,8 @@ export interface Combatant {
   immuneToSuppressFlight: boolean
   /** 裂翼 voidAura：expose 無法解析 */
   unanalyzable: boolean
+  /** 世界級 Boss 的執行期狀態（永恆的聖域），一般騎士為 undefined。 */
+  boss?: BossRuntime
 }
 
 export interface TeamState {
@@ -223,6 +249,18 @@ export interface BattleConfig {
    * 省略（或用 simulateBattle()）= 沒有任何單位是玩家操控，行為與原本的全自動模擬完全一致。
    */
   isPlayerControlled?: (c: Combatant) => boolean
+  /**
+   * 先攻決定演出的結果：第 1 回合這一方所有單位（各自依速度排序）先於另一方行動。
+   * 只影響第 1 回合；第 2 回合起恢復純速度值排序。省略 = 第 1 回合也純看速度（原行為）。
+   */
+  firstSide?: Side
+  /** 永恆的聖域：指定敵方哪一位是世界級 Boss（knightId 對得上的那位），啟用護盾／覺醒／專屬招式。 */
+  boss?: BossConfig
+  /**
+   * 星核君臨碎片（被動聖物，規格書 5）：我方第一位陣亡的騎士會以 50% HP 復活，每場限一次。
+   * 事件帶 meta.fragment=true，UI 據此播放「永恆投影降臨」演出。
+   */
+  fragmentEquipped?: boolean
 }
 
 /** 引擎接線規格 §24：玩家操控單位輪到行動時，need-action 請求裡附的「目前可用技能」 */
@@ -296,8 +334,11 @@ function buildTeam(
   side: Side,
   knights: readonly Knight[],
   allowStory: boolean,
+  excludeResonanceIds: readonly string[] = [],
 ): { team: TeamState; effects: ResonanceEffects } {
-  const resonances = getActiveResonances(knights, allowStory)
+  const resonances = getActiveResonances(knights, allowStory).filter(
+    (r) => !excludeResonanceIds.includes(r.resonance.id),
+  )
   const effects = mergeResonanceEffects(resonances)
   return {
     team: {
@@ -324,11 +365,13 @@ function mergeMountSkills(knight: Knight, riderSkills: Skill[]): { skills: Skill
   // 坐騎技能書直接查 SKILLS（不能走 getSkillsFor 的佔位技 fallback）
   const mountKit = SKILLS[mount.id] ?? []
   const upgrade = mount.fusion?.upgradeSkill
-  const overlay = mount.fusion?.upgradeOverlay
+  const overlays = [...(mount.fusion?.upgradeOverlay ? [mount.fusion.upgradeOverlay] : []), ...(mount.fusion?.upgradeOverlays ?? [])]
   // v3 判讀①：疊加而非替換 —— 原技能底層保留，換名字、掛上 mountBonus
-  const rider = riderSkills.map((s) =>
-    overlay && s.id === overlay.targetSkillId ? { ...s, name: overlay.name, mountBonus: overlay.additionalEffect } : s,
-  )
+  const rider = riderSkills.map((s) => {
+    const overlay = overlays.find((o) => o.targetSkillId === s.id)
+    // 強化名稱只存進 mountName，合體後才由 setMountSkillNames() 換上；合體前維持原名
+    return overlay ? { ...s, mountName: overlay.name, mountBonus: overlay.additionalEffect } : s
+  })
   const merged = mountKit.map((s) => {
     if (upgrade && s.id === upgrade.from) return UPGRADE_SKILLS[upgrade.to] ?? s
     return { ...s, id: `${mount.id}-${s.id}` }
@@ -399,6 +442,7 @@ function makeCombatant(
     mountCharge: 0,
     mountFusedOnce: false,
     mountAtkBonus: fusion?.atkBonusRatio ? knight.atk * fusion.atkBonusRatio : 0,
+    mountHealBonus: fusion?.healBonus ?? 0,
     mountSpdBonus: (fusion?.spdBonusFlat ?? 0) + (fusion?.spdBonusRatio ? knight.spd * fusion.spdBonusRatio : 0),
     mountLifeStealBonus: fusion?.lifeStealBonus ?? 0,
     mountDotStackBonus: fusion?.dotStackBonus ?? 0,
@@ -430,7 +474,7 @@ export function* runBattleSteps(
 ): Generator<BattleStepEvent, BattleResult, PlayerChoice | void> {
   const isPlayerControlled = config.isPlayerControlled ?? (() => false)
   const rng: RNG = config.rng ?? Math.random
-  const maxTurns = config.maxTurns ?? DEFAULT_MAX_TURNS
+  const maxTurns = config.maxTurns ?? config.boss?.maxTurns ?? DEFAULT_MAX_TURNS
   const spMode: SpMode = config.spMode ?? 'unit'
   const dmgScale = config.damageScale ?? DAMAGE_SCALE
   const events: BattleEvent[] = []
@@ -440,16 +484,47 @@ export function* runBattleSteps(
     effectHits[type] = (effectHits[type] ?? 0) + 1
   }
 
-  const allyBuild = buildTeam('ally', config.allies, config.allowStoryResonance ?? false)
+  const boss = config.boss
+  // 時代見證（Boss 被動）：開場就消除玩家隊伍的陣營加傷共鳴（守護／渾沌），
+  // 在建立 Combatant 之前濾掉，HP／攻擊倍率都不會吃到。
+  const allyBuild = buildTeam(
+    'ally',
+    config.allies,
+    config.allowStoryResonance ?? false,
+    boss?.nullifyFactionResonances ?? [],
+  )
   const enemyBuild = buildTeam('enemy', config.enemies, config.allowStoryResonance ?? false)
   const teams: Record<Side, TeamState> = { ally: allyBuild.team, enemy: enemyBuild.team }
 
-  const kitFor = (k: Knight) => config.skillKits?.[k.id] ?? getSkillsFor(k.id)
+  const kitFor = (k: Knight) =>
+    config.skillKits?.[k.id] ?? (boss && k.id === boss.knightId ? boss.skills : getSkillsFor(k.id))
   const resIds = (t: TeamState) => t.resonances.map((r) => r.resonance.id)
   const combatants: Combatant[] = [
     ...config.allies.map((k, i) => makeCombatant(k, 'ally', i, allyBuild.effects, kitFor(k), resIds(allyBuild.team))),
     ...config.enemies.map((k, i) => makeCombatant(k, 'enemy', i, enemyBuild.effects, kitFor(k), resIds(enemyBuild.team))),
   ]
+
+  // 世界級 Boss 單位：把執行期狀態掛上去（本體 HP／體型沿用 Knight 資料，護盾另計）。
+  const bossUnit = boss ? combatants.find((c) => c.side === 'enemy' && c.knight.id === boss.knightId) : undefined
+  if (boss && bossUnit) {
+    const realm = Math.round(bossUnit.maxHp * boss.realmHpRatio)
+    bossUnit.boss = {
+      phase: 1,
+      shieldHp: boss.shieldHp,
+      shieldMax: boss.shieldHp,
+      shieldActive: true,
+      chanting: false,
+      chantActed: false,
+      reviveUsed: false,
+      realmHp: realm,
+      realmMaxHp: realm,
+      sizeMult: 1,
+    }
+    // Boss 不吃 SP 這套：招式全部 cost 0、靠冷卻輪替。
+    bossUnit.sp = 0
+  }
+  const hasSilverWing = config.allies.some((k) => k.id === 'silver-wing')
+  let fragmentUsed = false
 
   const other = (s: Side): Side => (s === 'ally' ? 'enemy' : 'ally')
   const living = (s: Side) => combatants.filter((c) => c.side === s && c.alive)
@@ -560,6 +635,72 @@ export function* runBattleSteps(
     }
   }
 
+  // ── 永恆的聖域：星核王盾／覺醒 ──
+  /**
+   * 所有「扣血」的統一入口：目標有星核王盾時先吃盾（盾吸收的是「防禦前」的原始傷害——
+   * 本體 def 999 是本體的防禦，不該讓一個 3000 的護盾要打 20 幾下才破），盾破了剩下的
+   * 原始傷害再換算回本體防禦後的實際扣血。沒有盾的單位行為跟原本的 `tgt.hp -= dmg` 完全一樣。
+   */
+  function dealDamage(tgt: Combatant, dmg: number) {
+    const b = tgt.boss
+    if (!b || !b.shieldActive || dmg <= 0) {
+      tgt.hp -= dmg
+      return
+    }
+    const mit = 200 / (200 + effDef(tgt))
+    const raw = dmg / mit
+    const absorbed = Math.min(b.shieldHp, Math.round(raw))
+    b.shieldHp -= absorbed
+    log({
+      type: 'passive',
+      turn,
+      targetUid: tgt.uid,
+      amount: absorbed,
+      message: `　星核王盾承受 ${absorbed}（盾 ${b.shieldHp}/${b.shieldMax}）`,
+      meta: { shield: true, absorbed },
+    })
+    if (b.shieldHp <= 0) {
+      b.shieldHp = 0
+      b.shieldActive = false
+      log({ type: 'passive', turn, targetUid: tgt.uid, message: '★ 星核王盾粉碎！開始傷及本體', meta: { shieldBreak: true } })
+      tgt.hp -= Math.max(0, Math.round((raw - absorbed) * mit))
+    }
+  }
+
+  function startChant(b: Combatant) {
+    if (!b.boss) return
+    b.boss.chanting = true
+    b.boss.chantActed = false
+    log({ type: 'passive', turn, sourceUid: b.uid, message: '【覺醒】永恆正在與聖域共鳴……', meta: { chantStart: true } })
+  }
+
+  /** 本體 HP ≤ 覺醒門檻（且還在第一階段）→ 進入「合體詠唱」預警回合。 */
+  function checkAwaken() {
+    const b = bossUnit?.boss
+    if (!boss || !bossUnit || !b || !bossUnit.alive) return
+    if (b.phase !== 1 || b.chanting) return
+    if (bossUnit.hp <= bossUnit.maxHp * boss.awakenAt) startChant(bossUnit)
+  }
+
+  /** 預警回合結束 → 永恆與聖域合體：攻擊／速度換成第二階段數值，體型 ×3。 */
+  function fuseBoss() {
+    const b = bossUnit?.boss
+    if (!boss || !bossUnit || !b || !bossUnit.alive || !b.chanting || !b.chantActed) return
+    b.phase = 2
+    b.chanting = false
+    b.chantActed = false
+    b.sizeMult = boss.phase2.sizeMult
+    bossUnit.baseAtk = boss.phase2.atk
+    bossUnit.baseSpd = boss.phase2.spd
+    log({
+      type: 'passive',
+      turn,
+      sourceUid: bossUnit.uid,
+      message: `★ 永恆與天穹聖駒・聖域合體！攻擊 ${boss.phase2.atk}・速度 ${boss.phase2.spd}・體型 ×${boss.phase2.sizeMult}`,
+      meta: { fusion: true },
+    })
+  }
+
   // ── 傷害管線 ──
   function computeDamage(src: Combatant, tgt: Combatant, skill: Skill, opts: { ignoreShield?: boolean }): number {
     let attrMult = getAttrMultiplier(src.knight.coreAttr, tgt.knight.coreAttr)
@@ -584,10 +725,15 @@ export function* runBattleSteps(
     const variance = 0.85 + rng() * 0.3 // Q3：±15%
 
     let mark = 1 + focusMarkBonus(tgt.statuses, src.uid)
-    if (src.dmgVsIndependent && tgt.knight.faction === 'independent') mark += src.dmgVsIndependent
+    // Boss（永恆）用 independent 承接陣營欄位（見 data/bosses.ts），不該吃到「對獨立陣營加傷」
+    if (src.dmgVsIndependent && tgt.knight.faction === 'independent' && !tgt.boss) mark += src.dmgVsIndependent
     if (src.dmgVsDebuffed && hasAnyDebuff(tgt.statuses)) mark += src.dmgVsDebuffed
 
     let dmg = base * mitigation * attrMult * variance * mark
+
+    // 永恆的聖域：時代見證——玩家隊伍含銀翼時 Boss 技能威力 ×1.5；聖域氣場壓制——第二階段起玩家全體承傷 +15%
+    if (boss && src.boss && hasSilverWing) dmg *= boss.silverWingPowerMult
+    if (boss && bossUnit?.boss?.phase === 2 && tgt.side === 'ally') dmg *= 1 + boss.auraDamageTaken
 
     // Q13：aiso 符文陣列·星域重寫——被 randomize 的一方，技能傷害額外 ±variance 浮動
     const rv = randomizeVariance(src.statuses)
@@ -616,8 +762,18 @@ export function* runBattleSteps(
   }
 
   /** 坐騎合體：充能滿了才能觸發，觸發後才套用合體加成、坐騎才真正「上場」（見 Combatant.mountCharge）。 */
+  /** 合體後技能顯示坐騎強化名稱（mountName），合體前／坐騎倒下後還原原名。 */
+  function setMountSkillNames(actor: Combatant, fused: boolean) {
+    const base = actor.knight.id ? getSkillsFor(actor.knight.id) : []
+    const orig = (s: Skill) => base.find((b) => b.id === s.id)?.name ?? s.name
+    const rename = (s: Skill): Skill => (s.mountName ? { ...s, name: fused ? s.mountName : orig(s) } : s)
+    actor.skills = actor.skills.map(rename)
+    actor.passives = actor.passives.map(rename)
+  }
+
   function performMountFuse(actor: Combatant) {
     actor.mountAlive = true
+    setMountSkillNames(actor, true)
     actor.mountFusedOnce = true
     actor.mountHp = actor.mountMaxHp
     log({
@@ -749,7 +905,7 @@ export function* runBattleSteps(
     for (const t of enemiesOf(actor)) {
       if (!t.alive) continue
       const dmg = computeDamage(actor, t, { ...BASIC_ATTACK, power, type: 'aoe' }, {})
-      t.hp -= dmg
+      dealDamage(t, dmg)
       log({ type: 'damage', turn, sourceUid: actor.uid, targetUid: t.uid, amount: dmg, message: `　過載爆發！${t.knight.name} 受到 ${dmg} 傷害` })
       onDamageReceived(t, dmg, actor)
       checkDeath(t)
@@ -760,10 +916,36 @@ export function* runBattleSteps(
   function checkDeath(c: Combatant) {
     if (c.hp > 0 || !c.alive) return
     c.hp = 0
+    if (c.boss && boss) {
+      const b = c.boss
+      if (b.phase === 1) {
+        // 第一階段的 Boss 死不了：一擊把血量打穿覺醒門檻時，卡在門檻上直接進入合體詠唱
+        // （關卡的重點是兩個階段，不能讓爆發傷害跳過第二階段）。
+        c.hp = Math.max(1, Math.ceil(c.maxHp * boss.awakenAt))
+        if (!b.chanting) startChant(c)
+        return
+      }
+      if (!b.reviveUsed) {
+        b.reviveUsed = true
+        const cost = Math.round(b.realmMaxHp * boss.reviveRealmCostPct)
+        b.realmHp = Math.max(0, b.realmHp - cost)
+        c.hp = Math.max(1, Math.round(c.maxHp * boss.reviveHpPct))
+        log({
+          type: 'revive',
+          turn,
+          targetUid: c.uid,
+          amount: c.hp,
+          message: `【廢墟重生・聖域版】消耗聖域 HP ${cost}（餘 ${b.realmHp}/${b.realmMaxHp}），永恆以 ${c.hp} HP 復活！`,
+          meta: { bossRevive: true },
+        })
+        bump('bossRevive')
+        return
+      }
+    }
     // 王座永恆
-    const revive = c.passives.find((p) => p.trigger === 'hpZero')
+    const revive = c.boss ? undefined : c.passives.find((p) => p.trigger === 'hpZero')
     if (revive) {
-      const e = effectsOf(revive)[0]
+      const e = ovEffect(effectsOf(revive)[0], revive, c)
       const used = c.passiveUses[revive.id] ?? 0
       if (used < num(e.maxTimes, 1)) {
         c.passiveUses[revive.id] = used + 1
@@ -772,6 +954,21 @@ export function* runBattleSteps(
         bump('revive')
         return
       }
+    }
+    // 星核君臨碎片：我方第一位陣亡的騎士，永恆投影降臨、以 50% HP 重新參戰（每場限一次）
+    if (config.fragmentEquipped && !fragmentUsed && c.side === 'ally') {
+      fragmentUsed = true
+      c.hp = Math.max(1, Math.round(c.maxHp * 0.5))
+      log({
+        type: 'revive',
+        turn,
+        targetUid: c.uid,
+        amount: c.hp,
+        message: `★ 星核君臨——永恆投影降臨，${c.knight.name} 以 ${c.hp} HP 重新參戰！`,
+        meta: { fragment: true },
+      })
+      bump('stellarFragment')
+      return
     }
     c.alive = false
     log({ type: 'ko', turn, targetUid: c.uid, message: `${c.knight.name} 被擊墜！` })
@@ -824,6 +1021,14 @@ export function* runBattleSteps(
   }
 
   // ── 效果套用 ──
+  /** 坐騎合體共鳴 effectOverrides：合體期間覆寫這個技能自帶效果的欄位（例如 teamDmgReduce.value） */
+  function ovEffect(e: SkillEffect, skill: Skill, actor: Combatant): SkillEffect {
+    const ov = (actor.mountAlive ? skill.mountBonus?.effectOverrides : undefined) as
+      | Record<string, Record<string, unknown>>
+      | undefined
+    return ov?.[e.type] ? { ...e, ...ov[e.type] } : e
+  }
+
   function applyEffects(skill: Skill, actor: Combatant, primary: Combatant | undefined, trigUnit?: Combatant) {
     for (const e of effectsOf(skill)) applyEffect(e, skill, actor, primary, trigUnit)
   }
@@ -840,6 +1045,7 @@ export function* runBattleSteps(
       log({ type: 'stub', turn, sourceUid: actor.uid, message: `（${skill.name}：「${e.type}」尚未實作）` })
       return
     }
+    e = ovEffect(e, skill, actor)
     // v3 判讀②：條件旗標（sunnyField / darkField）不成立就整個效果跳過
     if (e.condition === 'sunnyField' && !isSunnyField(actor)) return
     if (e.condition === 'darkField' && !isDarkField(actor)) return
@@ -980,7 +1186,7 @@ export function* runBattleSteps(
       }
       case 'regen': {
         // Q9：value 是目標 maxHp 的百分比；Q14：治癒效果隨施術者星核力浮動
-        const hb = healBonus(effStarcore(actor))
+        const hb = healBonus(effStarcore(actor)) * (actor.mountAlive ? 1 + actor.mountHealBonus : 1)
         for (const t of targets)
           applyStatus(t.statuses, { kind: 'regen', value: t.maxHp * num(e.value) * hb, turnsLeft: num(e.duration, 2), label: skill.name, appliedTurn: turn })
         bump(e.type)
@@ -1092,8 +1298,8 @@ export function* runBattleSteps(
       }
       case 'selfHeal':
       case 'teamHeal': {
-        // Q14：治癒量隨施術者星核力浮動
-        const hb = healBonus(effStarcore(actor))
+        // Q14：治癒量隨施術者星核力浮動；合體後再乘 (1 + mountHealBonus)
+        const hb = healBonus(effStarcore(actor)) * (actor.mountAlive ? 1 + actor.mountHealBonus : 1)
         for (const t of targets) healUnit(t, t.maxHp * num(e.value) * hb, actor.knight.name, skill.name)
         if (e.bonus && (e.bonus as SkillEffect).type === 'cleanse')
           for (const t of targets) stripOneDebuff(t.statuses)
@@ -1156,6 +1362,29 @@ export function* runBattleSteps(
           applyStatus(t.statuses, { kind: 'exposed', value: 1, turnsLeft: num(e.duration ?? e.turns, 2), label: skill.name, appliedTurn: turn })
         }
         log({ type: 'debuff', turn, sourceUid: actor.uid, message: `　「${skill.name}」曝光敵方情報` })
+        bump(e.type)
+        break
+      }
+      case 'randomStrike': {
+        // 坐騎合體共鳴 extraEffects 用：追加 hits 次隨機打擊，每次從「當下存活的敵方」隨機選目標、
+        // 倍率 power（不含迴避判定，比照虛空餘響的追擊）。星滅龍煌「光柱增加至九道」的換算。
+        for (let i = 0; i < num(e.hits, 1); i++) {
+          const foes = enemiesOf(actor).filter((c) => c.alive)
+          if (!foes.length) break
+          const tgt = foes[Math.floor(rng() * foes.length)]
+          const dmg = computeDamage(actor, tgt, { ...BASIC_ATTACK, power: num(e.power, 0.3) }, {})
+          tgt.hp -= dmg
+          log({
+            type: 'damage',
+            turn,
+            sourceUid: actor.uid,
+            targetUid: tgt.uid,
+            amount: dmg,
+            message: `　追加光柱！${tgt.knight.name} 受到 ${dmg} 傷害（HP ${Math.max(0, tgt.hp)}/${tgt.maxHp}）`,
+          })
+          onDamageReceived(tgt, dmg, actor)
+          checkDeath(tgt)
+        }
         bump(e.type)
         break
       }
@@ -1304,6 +1533,14 @@ export function* runBattleSteps(
     }
   }
 
+  /** 坐騎合體共鳴 extraEffects：技能結算完畢後追加的效果（攻擊技與非攻擊技共用） */
+  function applyMountExtras(actor: Combatant, skill: Skill, primary: Combatant | undefined) {
+    if (!actor.mountAlive) return
+    const extras = skill.mountBonus?.extraEffects as SkillEffect[] | undefined
+    if (!extras) return
+    for (const e of extras) applyEffect(e, skill, actor, primary)
+  }
+
   // ── 一次攻擊（含多段 / 迴避 / lifeSteal / onHit）──
   function performAttack(actor: Combatant, skill: Skill, forcedTarget?: Combatant) {
     const empower = takeEmpower(actor.statuses)
@@ -1311,7 +1548,7 @@ export function* runBattleSteps(
     const ignoreShield = empower?.ignoreShield === true
     const mb = (actor.mountAlive ? skill.mountBonus : undefined) ?? {}
 
-    const hitCount = skill.type === 'multiHit' ? Math.max(1, num(skill.hits, 1)) : 1
+    const hitCount = skill.type === 'multiHit' ? Math.max(1, num(mb.hits, num(skill.hits, 1))) : 1
     const lifeStealEff = effectsOf(skill).find((e) => e.type === 'lifeSteal')
     if (effectsOf(skill).some((e) => e.type === 'eachHitIndependent')) bump('eachHitIndependent')
 
@@ -1363,7 +1600,7 @@ export function* runBattleSteps(
         }
       }
       const dmg = computeDamage(actor, tgt, { ...skill, power }, { ignoreShield })
-      tgt.hp -= dmg
+      dealDamage(tgt, dmg)
       log({
         type: 'damage',
         turn,
@@ -1389,6 +1626,7 @@ export function* runBattleSteps(
         if (tgt.mountHp <= 0) {
           tgt.mountHp = 0
           tgt.mountAlive = false
+          setMountSkillNames(tgt, false)
           log({ type: 'ko', turn, targetUid: tgt.uid, message: `　${tgt.knight.name} 的坐騎「${tgt.mount?.name}」倒下，失去合體加成` })
         }
       }
@@ -1442,11 +1680,11 @@ export function* runBattleSteps(
     const postTargets = skill.type === 'aoe' ? aoeTargets : primary ? [primary] : []
     const POST_KINDS = [
       'dot', 'selfDot', 'freeze', 'stun', 'stunSoft', 'airborne', 'chill', 'gravityBind',
-      'defDown', 'permDefDown', 'curse', 'spdDown', 'starcoreDown', 'frostCrack', 'dispel',
+      'defDown', 'permDefDown', 'curse', 'spdDown', 'starcoreDown', 'frostCrack', 'dispel', 'gaugeCharge',
     ]
     for (const e of effectsOf(skill)) {
       if (!POST_KINDS.includes(e.type)) continue
-      if (e.target === 'self') {
+      if (e.target === 'self' || e.type === 'gaugeCharge') {
         applyEffect(e, skill, actor, actor)
       } else {
         for (const t of postTargets.filter((x) => x.alive)) applyEffect({ ...e, target: 'enemy' }, skill, actor, t)
@@ -1468,12 +1706,14 @@ export function* runBattleSteps(
         bump('overloadChance')
       }
     }
+    applyMountExtras(actor, skill, primary)
   }
 
   function fireOnHit(actor: Combatant, tgt: Combatant) {
     for (const p of actor.passives) {
       if (p.trigger !== 'onHit') continue
-      for (const e of effectsOf(p)) {
+      for (const e0 of effectsOf(p)) {
+        const e = ovEffect(e0, p, actor)
         if (e.type !== 'stackMark') continue
         if (rng() >= num(e.chance, 0.35)) continue
         actor.voidMarks[tgt.uid] = (actor.voidMarks[tgt.uid] ?? 0) + 1
@@ -1482,12 +1722,74 @@ export function* runBattleSteps(
           actor.voidMarks[tgt.uid] = 0
           const oma = e.onMaxStack as SkillEffect | undefined
           const dmg = computeDamage(actor, tgt, { ...BASIC_ATTACK, power: num(oma?.power, 1.5) }, {})
-          tgt.hp -= dmg
+          dealDamage(tgt, dmg)
           log({ type: 'damage', turn, sourceUid: actor.uid, targetUid: tgt.uid, amount: dmg, message: `　虛空餘響爆發！${tgt.knight.name} 受到 ${dmg} 追擊` })
           bump('bonusAttack')
           checkDeath(tgt)
         }
       }
+    }
+  }
+
+  // ── 永恆的聖域：Boss 專屬 AI 與招式 ──
+  const CHANT_SKILL: Skill = { id: BOSS_SKILL_IDS.chant, name: '星核共鳴', cost: 0, type: 'special' }
+
+  /**
+   * Boss 的招式輪替：詠唱中一律先詠唱；第二階段天罰一冷卻好就放；血量 <90% 且庇護冷卻好時自補；
+   * 審判冷卻好就放；其餘用聖殿裁擊。全部 cost 0，靠冷卻（skill.cooldown）控制節奏。
+   */
+  function bossChoose(b: Combatant): { skill: Skill; target?: Combatant } {
+    const rt = b.boss!
+    if (rt.chanting && !rt.chantActed) return { skill: CHANT_SKILL }
+    const ready = (id: string) => b.skills.find((s) => s.id === id && (b.cooldowns[s.id] ?? 0) === 0)
+    if (rt.phase === 2) {
+      const wrath = ready(BOSS_SKILL_IDS.wrath)
+      if (wrath) return { skill: wrath }
+    }
+    const refuge = ready(BOSS_SKILL_IDS.refuge)
+    if (refuge && b.hp / b.maxHp < 0.9) return { skill: refuge }
+    const judgment = ready(BOSS_SKILL_IDS.judgment)
+    if (judgment) return { skill: judgment }
+    return { skill: b.skills.find((s) => s.id === BOSS_SKILL_IDS.strike) ?? BASIC_ATTACK }
+  }
+
+  function performBossSkill(actor: Combatant, skill: Skill, target?: Combatant) {
+    const announce = () =>
+      log({ type: 'action', turn, sourceUid: actor.uid, message: `${actor.knight.name} 使用「${skill.name}」`, meta: { skillId: skill.id } })
+    switch (skill.id) {
+      case BOSS_SKILL_IDS.chant:
+        log({ type: 'action', turn, sourceUid: actor.uid, message: '永恆正在與聖域共鳴……', meta: { skillId: skill.id, chant: true } })
+        if (actor.boss) actor.boss.chantActed = true
+        return
+      case BOSS_SKILL_IDS.refuge: {
+        announce()
+        while (stripOneDebuff(actor.statuses)) {
+          /* 清除全部可清除的負面狀態 */
+        }
+        healUnit(actor, actor.maxHp * 0.15, actor.knight.name, skill.name)
+        return
+      }
+      case BOSS_SKILL_IDS.judgment: {
+        announce()
+        for (const t of living('ally')) {
+          applyStatus(t.statuses, { kind: 'atkBoost', value: -0.4, turnsLeft: 2, label: skill.name, appliedTurn: turn })
+          applyStatus(t.statuses, { kind: 'starcoreBoost', value: -0.5, turnsLeft: 2, label: skill.name, appliedTurn: turn })
+        }
+        log({ type: 'debuff', turn, sourceUid: actor.uid, message: '　玩家全體 攻擊 -40%・星核力 -50%（2 回合）' })
+        return
+      }
+      case BOSS_SKILL_IDS.wrath: {
+        performAttack(actor, skill, target)
+        // 強制使玩家最高攻擊騎士 SP 清零
+        const top = [...living('ally')].sort((a, b) => effAtk(b) - effAtk(a))[0]
+        if (top) {
+          top.sp = 0
+          log({ type: 'debuff', turn, sourceUid: actor.uid, targetUid: top.uid, message: `　${top.knight.name} 的 SP 被強制清零！` })
+        }
+        return
+      }
+      default:
+        performAttack(actor, skill, target)
     }
   }
 
@@ -1560,7 +1862,11 @@ export function* runBattleSteps(
   }
 
   // ── 開場：always / battleStart 被動 ──
-  log({ type: 'battle-start', turn: 0, message: '戰鬥開始（3v3）' })
+  log({
+    type: 'battle-start',
+    turn: 0,
+    message: boss ? `戰鬥開始（${config.allies.length}v1・世界級 Boss）` : '戰鬥開始（3v3）',
+  })
   for (const s of ['ally', 'enemy'] as const)
     for (const ar of teams[s].resonances)
       log({ type: 'resonance', turn: 0, message: `${s === 'ally' ? '我方' : '敵方'}共鳴陣：${ar.resonance.name} — ${ar.resonance.description}`, meta: { side: s, id: ar.resonance.id } })
@@ -1601,7 +1907,10 @@ export function* runBattleSteps(
     void spMode
     yield { kind: 'turn-start', turn, events: events.slice(turnStartBegin), combatants }
 
-    const order = combatants.filter((c) => c.alive).sort((a, b) => effSpd(b) - effSpd(a) || (rng() < 0.5 ? -1 : 1))
+    const firstRank = (c: Combatant) => (turn === 1 && config.firstSide ? (c.side === config.firstSide ? 0 : 1) : 0)
+    const order = combatants
+      .filter((c) => c.alive)
+      .sort((a, b) => firstRank(a) - firstRank(b) || effSpd(b) - effSpd(a) || (rng() < 0.5 ? -1 : 1))
     // 項目 B 換人代打（主人 2026-09-12 拍板）：本回合已經行動過的人——包含被叫去代打、提前
     // 用掉這回合機會的替補——輪到自己原本的速度排序位置時整個跳過，不會再行動第二次；
     // 「不補行動格」＝代打掉的那個原始 actor 這回合就是沒出手，不會有另一個格位補給它。
@@ -1615,9 +1924,12 @@ export function* runBattleSteps(
       if (!actor.alive) continue
       if (actedThisRound.has(actor.uid)) continue
       if (sideWiped('ally') || sideWiped('enemy')) break
+      checkAwaken()
       const stepBegin = events.length
-      if (isSkipped(actor.statuses, rng)) {
+      // 世界級 Boss 免疫控場（凍結／暈眩…），否則 3 打 1 一次定身就能鎖死整場
+      if (!actor.boss && isSkipped(actor.statuses, rng)) {
         log({ type: 'skip', turn, sourceUid: actor.uid, message: `${actor.knight.name} 無法行動` })
+        checkAwaken()
         yield { kind: 'unit-acted', actorUid: actor.uid, events: events.slice(stepBegin), combatants }
         continue
       }
@@ -1686,6 +1998,8 @@ export function* runBattleSteps(
             action = chooseAction(realActor)
           }
         }
+      } else if (actor.boss) {
+        action = bossChoose(actor)
       } else if (canFuseNow) {
         performMountFuse(actor)
         fused = true
@@ -1694,6 +2008,7 @@ export function* runBattleSteps(
       }
 
       if (fused) {
+        checkAwaken()
         yield { kind: 'unit-acted', actorUid: realActor.uid, events: events.slice(stepBegin), combatants }
         continue
       }
@@ -1705,11 +2020,14 @@ export function* runBattleSteps(
       if (skill.cooldown) realActor.cooldowns[skill.id] = skill.cooldown
       gainMountCharge(realActor, skill.id === 'normal' ? 0.15 : 0.2)
 
-      if (skill.type === 'attack' || skill.type === 'aoe' || skill.type === 'multiHit') {
+      if (realActor.boss) {
+        performBossSkill(realActor, skill, target)
+      } else if (skill.type === 'attack' || skill.type === 'aoe' || skill.type === 'multiHit') {
         performAttack(realActor, skill, target)
       } else {
         applyEffects(skill, realActor, target)
-        log({ type: skill.type === 'buff' ? 'buff' : 'debuff', turn, sourceUid: realActor.uid, message: `${realActor.knight.name} 使用「${skill.name}」${skill.cost ? `（-${skill.cost} SP）` : ''}` })
+        applyMountExtras(realActor, skill, target)
+        log({ type: skill.type === 'buff' ? 'buff' : 'debuff', turn, sourceUid: realActor.uid, message: `${realActor.knight.name} 使用「${skill.name}」${skill.cost ? `（-${skill.cost} SP）` : ''}`, meta: { skillId: skill.id } })
       }
 
       // v3 判讀②：enemyUsesSkill — 敵方使用主動技（cost > 0）時，對方陣營的對應被動發動（moonstagg 蝕影反標）
@@ -1718,6 +2036,7 @@ export function* runBattleSteps(
           for (const p of foe.passives) if (p.trigger === 'enemyUsesSkill') applyEffects(p, foe, realActor)
       }
 
+      checkAwaken()
       yield { kind: 'unit-acted', actorUid: realActor.uid, events: events.slice(stepBegin), combatants }
     }
 
@@ -1737,12 +2056,16 @@ export function* runBattleSteps(
       const { dotDamage, regenHeal, labels } = tickStatuses(c.statuses, turn)
       if (regenHeal > 0) healUnit(c, regenHeal, c.knight.name, '再生')
       if (dotDamage > 0) {
-        c.hp -= dotDamage
+        dealDamage(c, dotDamage)
         log({ type: 'dot', turn, targetUid: c.uid, amount: dotDamage, message: `${c.knight.name} 受到「${labels.join('、')}」${dotDamage} 持續傷害（HP ${Math.max(0, c.hp)}/${c.maxHp}）` })
         onDamageReceived(c, dotDamage)
         checkDeath(c)
       }
     }
+
+    // 合體詠唱預警回合結束 → 合體（DoT 結算之後、回合尾 yield 之前，事件會跟著這一步播給 UI）
+    checkAwaken()
+    fuseBoss()
 
     yield { kind: 'turn-end', turn, events: events.slice(turnEndBegin), combatants }
 

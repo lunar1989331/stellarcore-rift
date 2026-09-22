@@ -30,8 +30,8 @@ export interface BattleUnitSlot {
   isMounted?: boolean
 }
 
-export const LEVEL_NAME = '星環聖殿・第三章'
-export const LEVEL_NAME_EN = 'STELLAR TEMPLE'
+export const LEVEL_NAME = '對戰模式'
+export const LEVEL_NAME_EN = 'BATTLE MODE'
 
 // 3v3 名冊（陣列順序＝前 2 後 1，見 engine/battle.ts makeCombatant 的 row 規則）。
 // 沿用先前 demo 場景的角色選角：我方銀翼＋奧瑟里斯守前排、艾爾希亞守後排補治。
@@ -67,6 +67,36 @@ export function getPlayerFaction(playerIds: readonly string[]): Faction {
   const chaosCount = knights.filter((k) => k.faction === 'chaos').length
   if (guardianCount === 0 && chaosCount === 0) return 'independent'
   return guardianCount >= chaosCount ? 'guardian' : 'chaos'
+}
+
+/**
+ * 攻守回合切換節奏強化規格書（2026-09-19）追加指令：TurnPhaseBanner 的顏色/文字要依隊伍
+ * 實際陣營組成決定，不是寫死「我方＝GUARDIAN、敵方＝CHAOS」。跟上面的 getPlayerFaction()
+ * 是不同用途、故意不共用——那個函式是拿來決定「該從哪個池抽對立敵方」，平手時刻意讓守護方
+ * 勝出（`guardianCount >= chaosCount`），且沒有「獨立騎士整隊過半」這個特判；這裡的規則是
+ * 主人這次明確給的，兩者算法不一樣，硬共用只會讓其中一邊的行為跟指示對不上。
+ *
+ * orderedIds 必須是「玩家實際選角順序」（我方）或「該側名冊陣列順序」（敵方，沒有真正選角
+ * 動作，用陣列順序本身當作「第一個」的替代品，理由跟主人說的「同上邏輯」一致）。
+ *
+ * 演算法：
+ * 1. 獨立騎士數「嚴格多於」守護與渾沌兩者 → 'independent'（獨立騎士為主，銀白 STELLAR）。
+ *    （只有 0 守護 0 渾沌全獨立，或獨立佔比最高時才會進這支，符合「以獨立為主」的字面意思。）
+ * 2. 守護與渾沌人數相等（不論獨立騎士是 0 或跟他們也打平，例如 1 守護+1 渾沌+1 獨立這種
+ *    三方均分的邊界情況）→ 用 orderedIds 裡第一個能查到資料的騎士，直接採用「他」的陣營
+ *    （不特別排除獨立騎士——主人原文只說「以第一個選的騎士陣營為準」，沒有限定那個人一定要
+ *    是守護或渾沌其中之一）。
+ * 3. 其餘情況（獨立騎士未過半、守護渾沌人數不相等）→ 守護、渾沌兩者間人數較多的那個
+ *    （獨立騎士不計入這個比較，見主人原文「獨立騎士計入混合隊伍時不計入守護或渾沌的數量」）。
+ */
+export function resolveTeamBannerFaction(orderedIds: readonly string[]): Faction {
+  const knights = orderedIds.map((id) => getKnight(id)).filter((k): k is NonNullable<typeof k> => !!k)
+  const guardianCount = knights.filter((k) => k.faction === 'guardian').length
+  const chaosCount = knights.filter((k) => k.faction === 'chaos').length
+  const independentCount = knights.filter((k) => k.faction === 'independent').length
+  if (independentCount > guardianCount && independentCount > chaosCount) return 'independent'
+  if (guardianCount === chaosCount) return knights[0]?.faction ?? 'independent'
+  return guardianCount > chaosCount ? 'guardian' : 'chaos'
 }
 
 /** 依玩家陣營選對立的敵方池——守護對渾沌、渾沌對守護；純獨立隊沒有天生的對立陣營，
@@ -128,6 +158,14 @@ export const GUARDIAN_BANNER = {
   title: '守護陣營',
   lines: ['以星為誓', '守護一切光明'],
   sceneLabelEn: LEVEL_NAME_EN,
+  sceneName: '廢墟平原',
+  sceneSubtitle: '選擇你的陣營，決一勝負',
+}
+
+/** 永恆的聖域維持星環聖殿場景，旗幟文案沿用舊版。 */
+export const GUARDIAN_BANNER_SANCTUARY = {
+  ...GUARDIAN_BANNER,
+  sceneLabelEn: 'STELLAR TEMPLE',
   sceneName: '星環聖殿',
   sceneSubtitle: '破碎中仍閃耀',
 }

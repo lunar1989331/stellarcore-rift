@@ -129,7 +129,9 @@ export interface AnimationPlan {
 /** 把一步（一個單位的行動，或回合首尾的被動/DoT 結算）的 BattleEvent[] 轉成播放用的計畫。 */
 export function planAnimation(events: BattleEvent[], combatants: readonly Combatant[]): AnimationPlan {
   const byUid = (uid?: string) => combatants.find((c) => c.uid === uid)
-  const actionEvt = events.find((e) => e.type === 'action')
+  // 非攻擊技（buff／debuff／special）沒有 'action' 事件，引擎改記一筆帶 meta.skillId 的 buff／debuff
+  // 事件；兩者都要算「這個單位出了一招」，否則技能名稱與 cut-in 動畫整段被略過。
+  const actionEvt = events.find((e) => e.type === 'action' || (e.type !== 'passive' && e.meta?.skillId))
   const skipEvt = events.find((e) => e.type === 'skip')
 
   let skillName = ''

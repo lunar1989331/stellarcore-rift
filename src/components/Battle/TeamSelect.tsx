@@ -25,7 +25,18 @@ const FACTION_COPY: Record<FactionChoice, { title: string; subtitle: string }> =
 }
 
 interface TeamSelectProps {
-  onConfirm: (allyIds: string[]) => void
+  /**
+   * allyIds：前排在前、後排殿後的陣列（既有的 gameplay 順序，engine 用來分前後排）。
+   * pickOrderIds：玩家實際點選的順序（不受前/後排指定影響）——攻守節奏強化規格書
+   * （2026-09-19）的 TurnPhaseBanner 陣營平手判定要用「玩家選角時第一個選的騎士」，
+   * 如果直接拿 allyIds[0]，被指定站後排的那個人會被搬到陣列最後一格，即使他其實是
+   * 玩家第一個點的，也會被誤判成「不是第一個」——兩個陣列服務不同用途，故意分開給。
+   */
+  onConfirm: (allyIds: string[], pickOrderIds: string[]) => void
+  /** 永恆的聖域：陣營由關卡鎖定（渾沌限定），直接進入該陣營名冊、不顯示陣營選擇與返回鈕。 */
+  lockedFaction?: FactionChoice
+  /** 覆寫畫面標題／副標（聖域關卡用）。 */
+  heading?: { title: string; subtitle: string }
 }
 
 /** 項目 D 附錄驗證函式：陣營騎士最多擇一陣營、獨立騎士不佔配額、隊伍合計最多 3 人。
@@ -63,8 +74,8 @@ function FactionBadge({ faction }: { faction: FactionChoice }) {
   )
 }
 
-export function TeamSelect({ onConfirm }: TeamSelectProps) {
-  const [selectedFaction, setSelectedFaction] = useState<FactionChoice | null>(null)
+export function TeamSelect({ onConfirm, lockedFaction, heading }: TeamSelectProps) {
+  const [selectedFaction, setSelectedFaction] = useState<FactionChoice | null>(lockedFaction ?? null)
   const [selected, setSelected] = useState<string[]>([])
   const [backId, setBackId] = useState<string | null>(null)
 
@@ -89,6 +100,7 @@ export function TeamSelect({ onConfirm }: TeamSelectProps) {
   // 項目 D：返回陣營選擇時清空已選騎士，避免「先選了2位守護騎士→返回→改選渾沌陣營」
   // 殘留舊陣營的人選在隊伍裡（規格書明講的「避免混陣營殘留」）。
   const handleBackToFaction = () => {
+    if (lockedFaction) return
     setSelectedFaction(null)
     setSelected([])
     setBackId(null)
@@ -102,15 +114,15 @@ export function TeamSelect({ onConfirm }: TeamSelectProps) {
     if (!canConfirm) return
     const front = selected.filter((id) => id !== effectiveBackId)
     const ordered = effectiveBackId ? [...front, effectiveBackId] : selected
-    onConfirm(ordered)
+    onConfirm(ordered, selected)
   }
 
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <h1 className={styles.title}>出戰陣容選擇</h1>
+        <h1 className={styles.title}>{heading?.title ?? '出戰陣容選擇'}</h1>
         <p className={styles.subtitle}>
-          從騎士名冊中選 {TEAM_SIZE} 位出戰，並指定 1 位站後排（3v3：前排 2 位＋後排 1 位）
+          {heading?.subtitle ?? `從騎士名冊中選 ${TEAM_SIZE} 位出戰，並指定 1 位站後排（3v3：前排 2 位＋後排 1 位）`}
         </p>
       </div>
 
@@ -161,9 +173,11 @@ export function TeamSelect({ onConfirm }: TeamSelectProps) {
         ) : (
           <div className={styles.factionGroup}>
             <div className={styles.rosterStepHeader}>
-              <button type="button" className={styles.backBtn} onClick={handleBackToFaction}>
-                ← 返回陣營選擇
-              </button>
+              {!lockedFaction && (
+                <button type="button" className={styles.backBtn} onClick={handleBackToFaction}>
+                  ← 返回陣營選擇
+                </button>
+              )}
               <h2 className={styles.factionTitle} style={{ color: FACTION_COLORS[selectedFaction].primary }}>
                 {FACTION_COPY[selectedFaction].title}騎士
               </h2>

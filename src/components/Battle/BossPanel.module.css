@@ -1,0 +1,264 @@
+/* 世界級 Boss 面板。高度相對於敵方半場（.bossSide）：第一階段 62%、第二階段 100%，
+   transition 讓「體型擴大」有一個可見的膨脹過程。 */
+.panel {
+  position: relative;
+  width: min(100%, 720px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border: 1px solid rgba(192, 132, 252, 0.6);
+  border-radius: 10px;
+  background: linear-gradient(100deg, rgba(20, 10, 40, 0.92), rgba(12, 10, 24, 0.9));
+  box-shadow: 0 0 22px rgba(192, 132, 252, 0.35), inset 0 0 20px rgba(192, 132, 252, 0.12);
+  overflow: hidden;
+  transition: height 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.6s ease, border-color 0.6s ease;
+}
+
+.phase1 {
+  height: 62%;
+}
+
+.phase2 {
+  height: 100%;
+  border-color: rgba(255, 210, 106, 0.85);
+  box-shadow: 0 0 34px rgba(255, 190, 90, 0.5), 0 0 60px rgba(192, 132, 252, 0.4),
+    inset 0 0 26px rgba(255, 210, 106, 0.16);
+}
+
+.casting {
+  border-color: #fff;
+}
+
+.telegraph {
+  animation: bossTelegraph 0.3s ease-in-out 2;
+}
+
+@keyframes bossTelegraph {
+  50% {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.9);
+  }
+}
+
+.chanting {
+  animation: chantPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes chantPulse {
+  50% {
+    box-shadow: 0 0 46px rgba(255, 210, 106, 0.85), 0 0 70px rgba(192, 132, 252, 0.7);
+  }
+}
+
+.art {
+  position: relative;
+  flex: 0 0 46%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.artImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+  /* 第二階段紫金星核脈絡亮起 */
+  transition: filter 0.9s ease, transform 0.9s ease;
+}
+
+.phase2 .artImg {
+  filter: saturate(1.25) brightness(1.08) drop-shadow(0 0 12px rgba(255, 210, 106, 0.6));
+  transform: scale(1.06);
+}
+
+.artFade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 55%, rgba(14, 9, 28, 0.95));
+}
+
+.info {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(3px, 0.6vh, 8px);
+  padding: clamp(6px, 1.2vh, 14px) clamp(8px, 1.2vw, 18px) clamp(6px, 1.2vh, 14px) 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.name {
+  font-size: clamp(14px, 1.7vw, 24px);
+  font-weight: 800;
+  color: #f3e8ff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.7);
+}
+
+.phaseTag {
+  font-size: clamp(9px, 0.85vw, 12px);
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 210, 106, 0.7);
+  color: #ffd76a;
+  white-space: nowrap;
+}
+
+.nameEn {
+  font-size: clamp(8px, 0.8vw, 11px);
+  color: rgba(216, 180, 254, 0.75);
+  letter-spacing: 0.08em;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.6s ease, max-height 0.6s ease;
+  max-height: 40px;
+}
+
+/* 盾破之後整列收起，HP 條自然上移（一次性、不再生）。 */
+.barGone {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.barLabel {
+  font-size: clamp(9px, 0.85vw, 12px);
+  color: #d8b4fe;
+  font-weight: 700;
+  min-width: 3.2em;
+}
+
+.barNum {
+  font-size: clamp(9px, 0.85vw, 12px);
+  color: #e9d5ff;
+  font-variant-numeric: tabular-nums;
+}
+
+.shieldTrack,
+.hpTrack {
+  position: relative;
+  height: clamp(7px, 1vh, 11px);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.shieldFill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #c084fc);
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.9);
+  transition: width 0.5s ease;
+}
+
+.hpFill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.awakenTick {
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: rgba(255, 210, 106, 0.95);
+}
+
+.chantHint {
+  font-size: clamp(10px, 1vw, 14px);
+  color: #ffd76a;
+  font-weight: 700;
+  animation: chantText 1s ease-in-out infinite;
+}
+
+@keyframes chantText {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.realmRow {
+  font-size: clamp(9px, 0.85vw, 12px);
+  color: #fde68a;
+}
+
+.reticle {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.26);
+  border: 2px solid rgba(239, 68, 68, 0.85);
+  border-radius: inherit;
+  animation: bossReticle 1s ease-in-out infinite;
+}
+
+.reticleMark {
+  font-size: clamp(20px, 2.6vw, 34px);
+  color: #fff;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
+}
+
+.reticleHint {
+  font-size: clamp(9px, 0.9vw, 13px);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes bossReticle {
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.targetable {
+  cursor: pointer;
+}
+
+.dead .art {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.koOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.koLabel {
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 900;
+  color: #ef4444;
+  letter-spacing: 0.12em;
+}
+
+.floatingLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

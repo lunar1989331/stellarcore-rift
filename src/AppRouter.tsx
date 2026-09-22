@@ -8,6 +8,8 @@ export function AppRouter() {
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/battle" element={<BattleScreen />} />
+        {/* 永恆的聖域：渾沌限定・世界級 Boss（規格書 2-3：gameMode = eternal_sanctuary，陣營自動鎖定渾沌） */}
+        <Route path="/sanctuary" element={<BattleScreen mode="eternal_sanctuary" />} />
       </Routes>
     </BrowserRouter>
   )

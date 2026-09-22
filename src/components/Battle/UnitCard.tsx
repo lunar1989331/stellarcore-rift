@@ -17,6 +17,9 @@ interface UnitCardProps {
   slot: BattleUnitSlot
   isCurrent: boolean
   isCasting?: boolean
+  /** 攻守節奏強化規格書（2026-09-19）項目【3】：敵方行動前搖——邊框閃爍兩次，讓玩家在
+   * 攻擊動畫真正開始前先看清楚「輪到哪個敵人了」。見 UnitCard.module.css 的 .telegraph。 */
+  isTelegraphing?: boolean
   hits?: FloatingHit[]
   onSelect?: () => void
   /** 玩家反饋規格 v1.0 項目 C：瞄準模式中，這張卡是不是合法目標（會顯示準星、可點擊指定）。 */
@@ -41,7 +44,17 @@ function FactionCompass() {
   )
 }
 
-export function UnitCard({ knight, slot, isCurrent, isCasting, hits, onSelect, targetable, dimmed }: UnitCardProps) {
+export function UnitCard({
+  knight,
+  slot,
+  isCurrent,
+  isCasting,
+  isTelegraphing,
+  hits,
+  onSelect,
+  targetable,
+  dimmed,
+}: UnitCardProps) {
   // 敵我識別規格書 v1.0 · 項目 B：卡片左側的固定藍/紅識別條，用來在「玩家選渾沌時，敵我
   // 雙方邊框都是深紅、六張卡分不出誰是誰」的情境下提供一個不受陣營色影響的第二識別管道。
   // 判斷依據是 engine Combatant.uid 的 `${side}-${knightId}-${index}` 格式（side 型別只有
@@ -94,6 +107,7 @@ export function UnitCard({ knight, slot, isCurrent, isCasting, hits, onSelect, t
         isPlayerUnit ? styles.playerUnit : styles.enemyUnit,
         slot.isMounted ? styles.mounted : '',
         isCurrent ? styles.current : '',
+        isTelegraphing ? styles.telegraph : '',
         targetable ? styles.targetable : '',
         dimmed ? styles.dimmed : '',
       ].join(' ')}

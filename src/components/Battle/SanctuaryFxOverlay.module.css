@@ -1,0 +1,60 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shieldBreak {
+  background: radial-gradient(circle at 50% 40%, rgba(129, 140, 248, 0.5), rgba(10, 8, 30, 0.7) 70%);
+}
+
+.fusion {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 210, 106, 0.35), rgba(30, 10, 60, 0.88) 75%);
+}
+
+.fragment {
+  background: radial-gradient(circle at 50% 50%, rgba(216, 180, 254, 0.55), rgba(20, 8, 40, 0.8) 70%);
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  opacity: 0.7;
+  filter: saturate(1.2);
+}
+
+.shards {
+  position: absolute;
+  inset: 0;
+  background:
+    conic-gradient(from 20deg at 50% 50%, transparent 0 8%, rgba(255, 255, 255, 0.18) 8% 9%, transparent 9% 33%, rgba(255, 255, 255, 0.14) 33% 34%, transparent 34% 62%, rgba(255, 255, 255, 0.16) 62% 63%, transparent 63%);
+  mix-blend-mode: screen;
+}
+
+.text {
+  position: relative;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(192, 132, 252, 0.95), 0 0 36px rgba(255, 210, 106, 0.6);
+}
+
+.title {
+  font-size: clamp(26px, 4.4vw, 62px);
+  font-weight: 900;
+}
+
+.sub {
+  margin-top: 6px;
+  font-size: clamp(10px, 1.2vw, 16px);
+  letter-spacing: 0.3em;
+  color: #e9d5ff;
+}

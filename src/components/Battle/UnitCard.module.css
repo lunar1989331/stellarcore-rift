@@ -83,6 +83,30 @@
   }
 }
 
+/* 攻守回合切換節奏強化規格書（2026-09-19）項目【3】：敵方行動前搖——邊框閃爍兩次
+   （animation-iteration-count: 2，每次 300ms＝共 600ms），讓玩家在攻擊動畫真正開始前，
+   先看清楚「輪到哪個敵人了」。閃爍完畢後的 400ms 停頓是 BattleScreen.tsx 的
+   runPhaseTransition() 直接 sleep 控制，不是這個 CSS 動畫的一部分。 */
+.telegraph {
+  animation: telegraphFlash 300ms ease-in-out 2;
+}
+
+@keyframes telegraphFlash {
+  0%,
+  100% {
+    border-color: var(--faction-color, #666);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 4px 20px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    border-color: #ff4d4d;
+    box-shadow:
+      0 0 22px rgba(255, 77, 77, 0.85),
+      inset 0 0 10px rgba(255, 77, 77, 0.35);
+  }
+}
+
 /* 項目 D：陣亡演出——包住卡片所有內容（floatingLayer 除外）的內層 wrapper，同時也是
    「左立繪＋右資訊」這個橫向 flex 的容器。 */
 .shakeInner {

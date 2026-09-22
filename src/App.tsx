@@ -37,9 +37,16 @@ function App() {
       <header className="appHeader">
         <h1>星核裂紀 · Stellarcore Rift</h1>
         <p className="tagline">戰略集換式卡牌 RPG · Phase B 骨架</p>
-        <Link to="/battle" className="battleLink">
-          ⚔ 進入戰鬥畫面 UI 展示
-        </Link>
+        <div className="battleLinks">
+          <Link to="/battle" className="battleLink">
+            ⚔ 一般對戰模式
+          </Link>
+          {/* 規格書 2-2／2-3：深紫色系，點擊後直接鎖定渾沌陣營進入 Boss 關卡 */}
+          <Link to="/sanctuary" className="sanctuaryLink">
+            <span className="sanctuaryLinkTitle">🌌 永恆的聖域</span>
+            <span className="sanctuaryLinkSub">渾沌限定・世界級Boss</span>
+          </Link>
+        </div>
       </header>
 
       <section className="demoPanel">
