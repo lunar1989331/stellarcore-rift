@@ -593,7 +593,12 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
 
   return (
     <div className={styles.root}>
-      {firstSide && !introDone && <FirstStrikeIntro key={runId} firstSide={firstSide} onDone={handleIntroDone} />}
+      {firstSide && !introDone && <FirstStrikeIntro
+          key={runId}
+          firstFaction={firstSide === 'ally' ? allyBannerFaction : enemyBannerFaction}
+          isBoss={isSanctuary && firstSide === 'enemy'}
+          onDone={handleIntroDone}
+        />}
       <div className={styles.topBarWrap}>
         <TopBar
           levelName={isSanctuary ? '永恆的聖域' : LEVEL_NAME}
