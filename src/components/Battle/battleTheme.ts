@@ -46,26 +46,27 @@ export function hpBarColor(pct: number): string {
   return '#f87171'
 }
 
-export type FloatingKind = 'damage' | 'crit' | 'heal' | 'cost' | 'shield'
+export type FloatingKind = 'damage' | 'crit' | 'heal' | 'shield' | 'sp'
 
-// 項目 G（2026-09-13）：damage／crit 的 color／textShadow 這兩個欄位不再被 FloatingNumber.tsx
-// 讀取——那兩種現在改用 CSS class（.value／.valueCrit，見 FloatingNumber.module.css）決定顏色，
-// 這裡留著只是不想為了兩個 kind 拆一個不同的型別；scale／direction 兩種仍然都在用（動畫幅度／
-// 方向），heal/cost/shield 三種完整套用整組欄位。
+// 玩家反饋規格（2026-09-25 傷害數字顏色/格式修正）：damage／crit／heal／shield／sp 的實際
+// 顏色與版面交給 CSS class 決定（見 FloatingNumber.module.css），這裡的 color／textShadow
+// 欄位保留給 FloatingNumber.tsx 沒用到 class 分支時的備用讀取（目前五種 kind 都已經有各自
+// 的 class，這兩欄實質上不再被讀取，留著只是不想為了拿掉兩個欄位再拆一個型別）；
+// scale／direction 兩種仍然都在用（動畫幅度／方向）。
 export const FLOATING_STYLE: Record<
   FloatingKind,
   { color: string; textShadow: string; scale: number; direction: 1 | -1 }
 > = {
-  damage: { color: '#ff5a5a', textShadow: '0 2px 6px rgba(0,0,0,.8)', scale: 1, direction: -1 },
+  damage: { color: '#FF4444', textShadow: 'none', scale: 1, direction: -1 },
   crit: {
-    color: '#ffd76a',
-    textShadow: '0 0 6px #fff, 0 2px 10px rgba(0,0,0,.85)',
+    color: '#FFD700',
+    textShadow: '0 0 8px #ffffff',
     scale: 1.3,
     direction: -1,
   },
-  heal: { color: '#4ee08a', textShadow: '0 2px 6px rgba(0,0,0,.8)', scale: 1, direction: -1 },
-  cost: { color: '#b98cff', textShadow: '0 2px 6px rgba(0,0,0,.8)', scale: 0.85, direction: 1 },
-  shield: { color: '#8fd6ff', textShadow: '0 2px 6px rgba(0,0,0,.8)', scale: 1, direction: -1 },
+  heal: { color: '#44FF88', textShadow: 'none', scale: 1, direction: -1 },
+  shield: { color: '#88CCFF', textShadow: 'none', scale: 1, direction: -1 },
+  sp: { color: '#AA66FF', textShadow: 'none', scale: 0.85, direction: 1 },
 }
 
 /**

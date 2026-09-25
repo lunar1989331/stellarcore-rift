@@ -10,36 +10,56 @@
   z-index: 60;
 }
 
-/* 項目 G：普通傷害——白字。Mina 給的是固定 24px，這裡改用 clamp() 維持跟卡片其他文字
-   一樣「隨視窗縮放」的既有語言（Session 18 才把卡片本身跟其他文字都改成 vw 級距，
-   這裡如果唯獨傷害數字寫死固定 px，在縮小的後排卡片上會顯得不成比例地巨大——見
-   CLAUDE.md Session 19），區間取跟原本 `.number` 一樣的 13–20px。 */
+/* 普通傷害——紅色負數，單行 */
 .value {
   font-size: clamp(13px, 1.6vw, 20px);
-  color: #ffffff;
+  color: #ff4444;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* 項目 G：爆擊——數字放大＋金色。Mina 給 34px（普通 24px 的 1.42 倍），這裡維持同一個
-   放大比例套在 clamp() 上（13–20px 的 1.42 倍 ≈ 18–28px），道理跟上面 .value 一樣。 */
-.valueCrit {
-  font-size: clamp(18px, 2.3vw, 28px);
-  color: #facc15;
-  font-weight: 900;
-  text-shadow: 0 0 12px rgba(250, 204, 21, 0.7), 0 2px 4px rgba(0, 0, 0, 0.8);
+/* 暴擊：兩行版面容器（column, 置中） */
+.critWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* 項目 G：CRIT 標籤 chip。 */
-.critTag {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 1px 5px;
-  background: #dc2626;
-  color: #ffffff;
-  font-size: 10px;
+/* 暴擊上行——大字負數，金色 + 白色 text-shadow */
+.valueCrit {
+  font-size: clamp(18px, 2.3vw, 28px);
+  color: #ffd700;
+  font-weight: 900;
+  text-shadow: 0 0 8px #ffffff;
+  line-height: 1.1;
+}
+
+/* 暴擊下行——CRITICAL!!，約上行 70% 大小，同色同 text-shadow */
+.critLabel {
+  font-size: clamp(12.6px, 1.61vw, 19.6px);
+  color: #ffd700;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  border-radius: 3px;
-  vertical-align: middle;
-  text-shadow: none;
+  text-shadow: 0 0 8px #ffffff;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+/* 回血——綠色正數，單行 */
+.valueHeal {
+  font-size: clamp(13px, 1.6vw, 20px);
+  color: #44ff88;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* 護盾吸收——淡藍，無符號，單行 */
+.valueShield {
+  font-size: clamp(13px, 1.6vw, 20px);
+  color: #88ccff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* SP 消耗——紫色，無符號，單行 */
+.valueSp {
+  font-size: clamp(13px, 1.6vw, 20px);
+  color: #aa66ff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }

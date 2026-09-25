@@ -1,7 +1,6 @@
-// 浮動數字（§11-2）：傷害白・爆擊金＋CRIT 標籤・回血綠・消耗紫（向下）・護盾吸收淡藍
-// 項目 G（PLAYER_FEEDBACK_SPEC_v1.0，E/G/H 實裝指令 v1 2026-09-13）：原本 crit 是一整串
-// 「CRITICAL!! -N」文字，改成「數字本體放大＋獨立 CRIT 標籤 chip」的結構，普通傷害也拆成
-// 同一種「數值 span」外殼（沒有 chip），視覺上更乾淨。
+// 浮動數字顏色/格式修正（2026-09-25）：damage 紅・crit 金（兩行：大字負數 + CRITICAL!!）・
+// heal 綠・shield 淡藍（無符號）・sp 紫（無符號）。每種 kind 的顏色與版面固定用各自的 CSS
+// class 決定（不再讀 FLOATING_STYLE.color/textShadow），符號（+/-/無）由這裡的 JS 決定。
 import { motion } from 'framer-motion'
 import { FLOATING_STYLE, type FloatingKind } from './battleTheme'
 import styles from './FloatingNumber.module.css'
@@ -19,8 +18,30 @@ interface FloatingNumberProps {
 
 export function FloatingNumber({ hit }: FloatingNumberProps) {
   const style = FLOATING_STYLE[hit.kind]
-  const isDamageLike = hit.kind === 'damage' || hit.kind === 'crit'
+  const isCrit = hit.kind === 'crit'
   const rise = 46 * style.direction
+  const value = Math.abs(hit.value)
+
+  const content = (() => {
+    switch (hit.kind) {
+      case 'crit':
+        // 暴擊：兩行版面——上：大字負數（金）；下：CRITICAL!!（金，約 70% 大小，白色 text-shadow）
+        return (
+          <span className={styles.critWrap}>
+            <span className={styles.valueCrit}>-{value}</span>
+            <span className={styles.critLabel}>CRITICAL!!</span>
+          </span>
+        )
+      case 'damage':
+        return <span className={styles.value}>-{value}</span>
+      case 'heal':
+        return <span className={styles.valueHeal}>+{value}</span>
+      case 'shield':
+        return <span className={styles.valueShield}>{value}</span>
+      case 'sp':
+        return <span className={styles.valueSp}>{value}</span>
+    }
+  })()
 
   return (
     <motion.div
@@ -30,27 +51,11 @@ export function FloatingNumber({ hit }: FloatingNumberProps) {
         opacity: [0, 1, 1, 0],
         y: [0, -rise * 0.4, -rise, -rise * 1.15],
         scale: style.scale,
-        x: hit.kind === 'crit' ? [0, -5, 5, -4, 4, 0] : 0,
+        x: isCrit ? [0, -5, 5, -4, 4, 0] : 0,
       }}
       transition={{ duration: 1.1, times: [0, 0.15, 0.75, 1], ease: 'easeOut' }}
     >
-      {isDamageLike ? (
-        // 傷害／爆擊：獨立的數值＋（爆擊才有的）CRIT 標籤，顏色/字級交給 CSS class
-        // 決定（.value 白／.valueCrit 金），不再用 battleTheme 的 FLOATING_STYLE.color
-        // ——那份顏色表現在只給 heal/cost/shield 這三種還在用單一字串的樣式用。
-        <span className={hit.kind === 'crit' ? styles.valueCrit : styles.value}>
-          {Math.abs(hit.value)}
-          {hit.kind === 'crit' && <span className={styles.critTag}>CRIT</span>}
-        </span>
-      ) : (
-        <span style={{ color: style.color, textShadow: style.textShadow }}>
-          {hit.kind === 'heal'
-            ? `+${hit.value}`
-            : hit.kind === 'cost'
-              ? `-${hit.value}`
-              : `${hit.value} 吸收`}
-        </span>
-      )}
+      {content}
     </motion.div>
   )
 }
