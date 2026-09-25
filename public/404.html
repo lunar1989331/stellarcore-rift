@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>stellarcore-rift</title>
+    <script type="text/javascript">
+      // GitHub Pages SPA 深連結重導向（https://github.com/rafgraph/spa-github-pages）
+      // GitHub Pages 對非首頁路徑（例如 /stellarcore-rift/battle）直接回應 404，不會像一般
+      // dev server 那樣做 SPA fallback——這裡把完整路徑編碼進 query string 導回首頁，
+      // index.html 裡對應的還原腳本再把它還原成真正路徑，讓 react-router 接手渲染。
+      var pathSegmentsToKeep = 1 // 保留 /stellarcore-rift 這一段（base）
+      var l = window.location
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+      )
+    </script>
+  </head>
+  <body></body>
+</html>
