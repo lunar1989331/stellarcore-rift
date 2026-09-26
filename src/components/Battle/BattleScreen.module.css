@@ -100,3 +100,26 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+/* Chronicle Mode 結算按鈕列（§10）：失敗時「重試」／「回到地圖」並排顯示。 */
+.resultActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.resultBtnSecondary {
+  margin-top: 6px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef1f7;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resultBtnSecondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+}

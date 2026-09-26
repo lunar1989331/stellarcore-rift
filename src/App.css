@@ -228,3 +228,40 @@
   opacity: 0.8;
   letter-spacing: 0.08em;
 }
+
+/* Chronicle Mode（劇情模式）：金色主按鈕，CHRONICLE_MODE_SPEC_v1.0 §3-2。 */
+.chronicleLink {
+  display: inline-block;
+  padding: 10px 30px;
+  border-radius: 999px;
+  border: 1px solid #ffd76a;
+  background: rgba(255, 215, 106, 0.14);
+  color: #ffd76a;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 20px rgba(255, 215, 106, 0.35);
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.chronicleLink:hover {
+  background: rgba(255, 215, 106, 0.24);
+  box-shadow: 0 0 30px rgba(255, 215, 106, 0.55);
+}
+
+/* Trial Mode：銀色次要按鈕，Phase 1-A 先做空殼（disabled，見 §3-2）。 */
+.trialLink {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 200, 210, 0.35);
+  background: rgba(200, 200, 210, 0.06);
+  color: #b8bccb;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: not-allowed;
+  opacity: 0.65;
+}

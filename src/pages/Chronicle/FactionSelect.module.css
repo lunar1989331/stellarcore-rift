@@ -1,0 +1,191 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #eef1f7;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(22px, 3.4vw, 32px);
+  letter-spacing: 0.08em;
+  background: linear-gradient(90deg, #4fa3ff, #ffd76a, #ff4f6d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin: 10px 0 34px;
+  opacity: 0.7;
+  font-size: 13px;
+}
+
+.cards {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  width: min(280px, 42vw);
+  min-width: 220px;
+  padding: 26px 20px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.guardian {
+  background: linear-gradient(160deg, #0a1628, #1a3a6b);
+  border: 1px solid #4a90d9;
+}
+
+.guardian:hover {
+  box-shadow: 0 0 32px rgba(74, 144, 217, 0.55);
+}
+
+.chaos {
+  background: linear-gradient(160deg, #1a0a0a, #5a0f0f);
+  border: 1px solid #c0392b;
+}
+
+.chaos:hover {
+  box-shadow: 0 0 32px rgba(192, 57, 43, 0.55);
+}
+
+.badge {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.25));
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.cardTitleEn {
+  font-size: 11px;
+  opacity: 0.6;
+  letter-spacing: 0.1em;
+  margin-top: -6px;
+}
+
+.cardQuote {
+  font-size: 12px;
+  opacity: 0.8;
+  line-height: 1.6;
+  min-height: 2.4em;
+}
+
+.chooseBtn {
+  margin-top: 10px;
+  padding: 8px 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  color: #eef1f7;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.guardian .chooseBtn:hover {
+  background: #2980b9;
+  border-color: #2980b9;
+}
+
+.chaos .chooseBtn:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+.warning {
+  margin-top: 30px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.confirmBox {
+  width: min(400px, 88vw);
+  padding: 26px 28px;
+  border-radius: 16px;
+  background: rgba(14, 14, 20, 0.95);
+  border: 1px solid rgba(255, 215, 106, 0.4);
+  box-shadow: 0 0 50px rgba(255, 215, 106, 0.2);
+  text-align: center;
+}
+
+.confirmTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffd76a;
+}
+
+.confirmMessage {
+  margin: 14px 0 22px;
+  font-size: 13px;
+  line-height: 1.7;
+  opacity: 0.85;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.cancelBtn,
+.confirmBtn {
+  padding: 9px 20px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  color: #eef1f7;
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.confirmBtn {
+  border: 1px solid rgba(255, 215, 106, 0.6);
+  background: rgba(255, 215, 106, 0.16);
+  color: #ffd76a;
+}
+
+.confirmBtn:hover {
+  background: rgba(255, 215, 106, 0.28);
+}

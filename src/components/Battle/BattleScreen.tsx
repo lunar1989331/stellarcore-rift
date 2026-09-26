@@ -14,6 +14,7 @@ import { FRAGMENT_STELLAR_SOVEREIGNTY, grantStellarFragment, hasStellarFragment 
 import type { Skill } from '../../data/skills'
 import type { BattleResult, BattleStepEvent, Combatant, PlayerActionRequest, PlayerChoice, Side } from '../../engine/battle'
 import { ActionBar } from './ActionBar'
+import { ChronicleResultActions } from '../../pages/Chronicle/BattleResult'
 import { needsEnemyTarget, planAnimation, toBattleUnitSlot, type PlannedHit } from './battleAdapter'
 import {
   ALLY_IDS,
@@ -57,8 +58,30 @@ const TRIGGER_LABEL: Record<string, string> = {
   enemyUsesSkill: '敵方出技能時',
 }
 
-/** 'eternal_sanctuary'＝永恆的聖域（渾沌限定・玩家 3v1 世界級 Boss），規格書 2-3 的 gameMode。 */
-export type BattleMode = 'normal' | 'eternal_sanctuary'
+/** 'eternal_sanctuary'＝永恆的聖域（渾沌限定・玩家 3v1 世界級 Boss），規格書 2-3 的 gameMode。
+ * 'chronicle'＝劇情模式的一場關卡戰鬥，見下面 ChronicleBattleConfig。 */
+export type BattleMode = 'normal' | 'eternal_sanctuary' | 'chronicle'
+
+/**
+ * Chronicle Mode 戰鬥接入參數（CHRONICLE_MODE_SPEC_v1.0 §9-1 的 ChronicleMatchConfig，
+ * Phase 1-A 精簡版）：陣容固定為關卡資料指定的敵方名冊（不像一般對戰模式隨機抽），
+ * 玩家可用騎士池由 playerFaction 決定（傳給 TeamSelect 的 lockedFaction）。
+ * onVictory/onDefeat 由呼叫端（ChronicleTeamSelect 頁面）負責寫存檔與導頁，
+ * BattleScreen 本身不知道、也不需要知道 Chronicle 的路由與存檔細節。
+ */
+export interface ChronicleBattleConfig {
+  battleId: string
+  /** 頂部 HUD 顯示的關卡名稱（如「哥德聖殿域・1-1 聖殿前哨戰」）。 */
+  domainName: string
+  playerFaction: 'guardian' | 'chaos'
+  enemyIds: string[]
+  sceneBase: 'ruins' | 'temple' | 'throne'
+  /** Phase 1-B 精英戰規則（HANDOFF_PHASE1B §3）：敵方攻擊力乘數，例如 1.25＝+25%；
+   * 一般戰／域主戰不帶這個欄位。實際套用在 useInteractiveBattle.ts，engine 本身不需要知道。 */
+  eliteAtkMultiplier?: number
+  onVictory: () => void
+  onDefeat: () => void
+}
 
 /** 從一步事件裡挑出要播放的聖域全螢幕演出（依發生順序：破盾→合體→碎片復活）。 */
 function sanctuaryFxOf(events: readonly { meta?: Record<string, unknown> }[]): SanctuaryFx[] {
@@ -72,8 +95,9 @@ function sanctuaryFxOf(events: readonly { meta?: Record<string, unknown> }[]): S
 }
 const SANCTUARY_FX_MS: Record<SanctuaryFx, number> = { shieldBreak: 1300, fusion: 2600, fragment: 2000 }
 
-export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
+export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode; chronicle?: ChronicleBattleConfig }) {
   const isSanctuary = mode === 'eternal_sanctuary'
+  const isChronicle = mode === 'chronicle'
   // 問題②：開戰前先選陣容；team===null 代表還沒選完，畫面顯示 TeamSelect 而不是戰場
   // （見下方 return 前的 early return）。team 非 null 時才是玩家真正選定的 3v3 名冊。
   const [team, setTeam] = useState<string[] | null>(null)
@@ -86,13 +110,16 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
   // 只在第一次 mount 算一次（此時 team 還是 null，用預設的 ALLY_IDS 當作「玩家隊伍」算對立
   // 陣營），之後每次真正開戰（handleTeamConfirm）都會呼叫 generateEnemyIds() 重新抽一次並
   // 蓋掉這個 state，見下方。
-  const [enemyIds, setEnemyIds] = useState<string[]>(() => (isSanctuary ? [ETERNAL_ID] : generateEnemyIds(ALLY_IDS, 3)))
+  const [enemyIds, setEnemyIds] = useState<string[]>(() =>
+    isSanctuary ? [ETERNAL_ID] : isChronicle ? chronicle!.enemyIds : generateEnemyIds(ALLY_IDS, 3),
+  )
 
   const { combatants, turn, ready, advance, restartWith } = useInteractiveBattle({
     allyIds: team ?? ALLY_IDS,
     enemyIds,
     boss: isSanctuary ? ETERNAL_BOSS : undefined,
     fragmentEquipped: hasStellarFragment(),
+    enemyAtkMultiplier: isChronicle ? chronicle!.eliteAtkMultiplier : undefined,
   })
   // 永恆的聖域專用狀態：全螢幕演出（破盾／合體／碎片復活）與通關獎勵。
   const [sanctuaryFx, setSanctuaryFx] = useState<SanctuaryFx | null>(null)
@@ -449,7 +476,7 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
       // 上一場的組合。restartWith 的第二個參數本來就支援直接帶新的 enemyIds 重建 generator，
       // 不用另外等 state 更新完才讀到新值（跟 allyIds 用同一個 closure-safe 寫法，見
       // useInteractiveBattle.ts 的註解）。
-      const newEnemyIds = isSanctuary ? [ETERNAL_ID] : generateEnemyIds(ids, 3)
+      const newEnemyIds = isSanctuary ? [ETERNAL_ID] : isChronicle ? chronicle!.enemyIds : generateEnemyIds(ids, 3)
       setEnemyIds(newEnemyIds)
       const fs: Side = Math.random() < 0.5 ? 'ally' : 'enemy'
       setFirstSide(fs)
@@ -457,12 +484,13 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
       restartWith(ids, newEnemyIds, fs, {
         boss: isSanctuary ? ETERNAL_BOSS : undefined,
         fragmentEquipped: hasStellarFragment(),
+        enemyAtkMultiplier: isChronicle ? chronicle!.eliteAtkMultiplier : undefined,
       })
       setTeam(ids)
       setTeamPickOrder(pickOrderIds)
       setRunId((n) => n + 1)
     },
-    [resetBattleUiState, restartWith, isSanctuary],
+    [resetBattleUiState, restartWith, isSanctuary, isChronicle, chronicle],
   )
 
   // 項目 C：瞄準模式中點別張我方卡片沒有意義（不能臨陣換人選目標），直接當成「取消瞄準」；
@@ -578,14 +606,19 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
     return (
       <TeamSelect
         onConfirm={handleTeamConfirm}
-        lockedFaction={isSanctuary ? 'chaos' : undefined}
+        lockedFaction={isSanctuary ? 'chaos' : isChronicle ? chronicle!.playerFaction : undefined}
         heading={
           isSanctuary
             ? {
                 title: '永恆的聖域・出戰陣容',
                 subtitle: '渾沌陣營限定・世界級 Boss「星核君主・永恆」——選 3 位出戰（獨立騎士可自由加入），指定 1 位站後排',
               }
-            : undefined
+            : isChronicle
+              ? {
+                  title: `${chronicle!.domainName}・出戰陣容`,
+                  subtitle: '選 3 位出戰（獨立騎士可自由加入），指定 1 位站後排',
+                }
+              : undefined
         }
       />
     )
@@ -601,8 +634,8 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
         />}
       <div className={styles.topBarWrap}>
         <TopBar
-          levelName={isSanctuary ? '永恆的聖域' : LEVEL_NAME}
-          levelNameEn={isSanctuary ? 'ETERNAL SANCTUARY' : LEVEL_NAME_EN}
+          levelName={isSanctuary ? '永恆的聖域' : isChronicle ? chronicle!.domainName : LEVEL_NAME}
+          levelNameEn={isSanctuary ? 'ETERNAL SANCTUARY' : isChronicle ? 'CHRONICLE MODE' : LEVEL_NAME_EN}
           turn={turn}
           phase={phase}
           onRestart={handleRestart}
@@ -640,7 +673,7 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
           telegraphUnitId={telegraphUnitId}
           cutInVideoUrl={cutInVideoUrl}
           onCutInEnded={handleCutInEnded}
-          sceneBase={isSanctuary ? 'temple' : 'ruins'}
+          sceneBase={isSanctuary ? 'temple' : isChronicle ? chronicle!.sceneBase : 'ruins'}
           bossCombatant={isSanctuary ? enemies.find((c) => c.boss) : undefined}
         />
 
@@ -677,9 +710,18 @@ export function BattleScreen({ mode = 'normal' }: { mode?: BattleMode }) {
                 <div className={styles.rewardDesc}>{FRAGMENT_STELLAR_SOVEREIGNTY.description}</div>
               </div>
             )}
-            <button type="button" className={styles.resultBtn} onClick={handleRestart}>
-              ↻ 再戰一場
-            </button>
+            {isChronicle ? (
+              <ChronicleResultActions
+                result={revealedResult}
+                onRetry={handleRestart}
+                onContinue={chronicle!.onVictory}
+                onBackToMap={chronicle!.onDefeat}
+              />
+            ) : (
+              <button type="button" className={styles.resultBtn} onClick={handleRestart}>
+                ↻ 再戰一場
+              </button>
+            )}
           </div>
         )}
       </div>

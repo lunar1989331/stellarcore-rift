@@ -38,6 +38,12 @@ function App() {
         <h1>星核裂紀 · Stellarcore Rift</h1>
         <p className="tagline">戰略集換式卡牌 RPG · Phase B 骨架</p>
         <div className="battleLinks">
+          {/* CHRONICLE_MODE_SPEC_v1.0 §3-2：金色主按鈕，Chronicle Mode 是主線劇情模式，
+              放在最上方。入口一律走 /chronicle，由 ChronicleRouter 判斷存檔狀態決定導向哪裡
+              （HANDOFF 注意事項 1）——這裡不做任何存檔判斷，單純導頁。 */}
+          <Link to="/chronicle" className="chronicleLink">
+            ▶ Chronicle Mode
+          </Link>
           <Link to="/battle" className="battleLink">
             ⚔ 一般對戰模式
           </Link>
@@ -46,6 +52,10 @@ function App() {
             <span className="sanctuaryLinkTitle">🌌 永恆的聖域</span>
             <span className="sanctuaryLinkSub">渾沌限定・世界級Boss</span>
           </Link>
+          {/* §3-2：Trial Mode 先做空殼即可，Phase 1-A 範圍不含試煉模式本體（§14 Phase 2）。 */}
+          <button type="button" className="trialLink" disabled title="試煉模式敬請期待">
+            ⚔ Trial Mode
+          </button>
         </div>
       </header>
 

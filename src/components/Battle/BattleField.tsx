@@ -17,6 +17,8 @@ import styles from './BattleField.module.css'
 const SCENE_TEMPLE_IMG = resolveKnightImage('星環聖殿.png')
 const SCENE_RUINS_IMG = resolveKnightImage('廢墟平原.png')
 const SCENE_VOID_SLASH_IMG = resolveKnightImage('星環聖殿：虛空裂切.png')
+// Chronicle Mode Phase 1-B：終局域（星穹聖殿・終局）專屬背景，供 sceneBase='throne' 使用。
+const SCENE_THRONE_IMG = resolveKnightImage('星穹聖殿王座廳.png')
 
 interface BattleFieldProps {
   enemyFormation: BattleUnitSlot[]
@@ -43,8 +45,8 @@ interface BattleFieldProps {
   onCutInEnded?: () => void
   /** 永恆的聖域：世界級 Boss 單位（有值時敵方半場改畫 BossPanel，不畫一般 2+1 卡片列）。 */
   bossCombatant?: Combatant
-  /** 預設戰場背景：一般對戰＝廢墟平原、永恆的聖域＝星環聖殿。 */
-  sceneBase?: 'ruins' | 'temple'
+  /** 預設戰場背景：一般對戰＝廢墟平原、永恆的聖域＝星環聖殿、Chronicle Mode 終局域＝星穹聖殿王座廳。 */
+  sceneBase?: 'ruins' | 'temple' | 'throne'
 }
 
 /**
@@ -132,7 +134,8 @@ export function BattleField({
   bossCombatant,
   sceneBase = 'ruins',
 }: BattleFieldProps) {
-  const SCENE_DEFAULT_IMG = sceneBase === 'temple' ? SCENE_TEMPLE_IMG : SCENE_RUINS_IMG
+  const SCENE_DEFAULT_IMG =
+    sceneBase === 'temple' ? SCENE_TEMPLE_IMG : sceneBase === 'throne' ? SCENE_THRONE_IMG : SCENE_RUINS_IMG
   const targeting = !!targetableEnemyUids && targetableEnemyUids.size > 0
 
   // 招式動畫 cut-in（2026-09-19 指令）：原本用 framer-motion 的 AnimatePresence + motion.video

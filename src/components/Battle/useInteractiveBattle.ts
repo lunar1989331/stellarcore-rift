@@ -22,12 +22,17 @@ export interface InteractiveBattleOptions {
   boss?: BossConfig
   /** 星核君臨碎片是否裝備（我方第一位陣亡騎士 50% HP 復活）。 */
   fragmentEquipped?: boolean
+  /** Chronicle Mode 精英戰規則（HANDOFF_PHASE1B §3）：敵方攻擊力乘數，例如 1.25＝+25%。
+   * 在這裡（不是 engine/battle.ts）套用——直接調整餵給引擎的 Knight 副本的 atk 欄位，
+   * 不動 BattleConfig／makeCombatant，引擎完全不用知道「精英戰」這個 Chronicle Mode 專屬概念。 */
+  enemyAtkMultiplier?: number
 }
 
 /** 每場戰鬥開始時才確定的額外引擎設定（restartWith 用，不依賴 hook 的 closure 值）。 */
 export interface BattleExtras {
   boss?: BossConfig
   fragmentEquipped?: boolean
+  enemyAtkMultiplier?: number
 }
 
 /**
@@ -59,7 +64,13 @@ function createGenerator(
   extras: BattleExtras = {},
 ): BattleGenerator {
   const allies = allyIds.map(getKnight).filter((k) => !!k)
-  const enemies = enemyIds.map(getKnight).filter((k) => !!k)
+  let enemies = enemyIds.map(getKnight).filter((k) => !!k)
+  // 精英戰 enemy-buffed：複製一份修改過 atk 的 Knight，不能直接改 getKnight() 拿到的物件——
+  // 那是 KNIGHTS_BY_ID 共用的參照，直接改會連圖鑑頁、其他戰鬥模式的數值一起變。
+  if (extras.enemyAtkMultiplier && extras.enemyAtkMultiplier !== 1) {
+    const multiplier = extras.enemyAtkMultiplier
+    enemies = enemies.map((k) => ({ ...k, atk: Math.round(k.atk * multiplier) }))
+  }
   return runBattleSteps({
     allies,
     enemies,
@@ -71,9 +82,17 @@ function createGenerator(
   })
 }
 
-export function useInteractiveBattle({ allyIds, enemyIds, rng, boss, fragmentEquipped }: InteractiveBattleOptions) {
+export function useInteractiveBattle({
+  allyIds,
+  enemyIds,
+  rng,
+  boss,
+  fragmentEquipped,
+  enemyAtkMultiplier,
+}: InteractiveBattleOptions) {
   const genRef = useRef<BattleGenerator | null>(null)
-  if (!genRef.current) genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped })
+  if (!genRef.current)
+    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier })
 
   const [combatants, setCombatants] = useState<Combatant[]>([])
   const [turn, setTurn] = useState(0)
@@ -82,11 +101,11 @@ export function useInteractiveBattle({ allyIds, enemyIds, rng, boss, fragmentEqu
   // 注意：allyIds/enemyIds/rng 必須是穩定參照（模組層常數，不要在呼叫端每次 render
   // 產生新陣列字面量），否則這裡會被誤判成需要重建。
   const restart = useCallback(() => {
-    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped })
+    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier })
     setResult(null)
     setTurn(0)
     setCombatants([])
-  }, [allyIds, enemyIds, rng, boss, fragmentEquipped])
+  }, [allyIds, enemyIds, rng, boss, fragmentEquipped, enemyAtkMultiplier])
 
   /**
    * 隊伍選擇畫面（問題②）用：直接帶新的 allyIds 重建 generator，不依賴 hook 參數 allyIds
@@ -96,12 +115,18 @@ export function useInteractiveBattle({ allyIds, enemyIds, rng, boss, fragmentEqu
    */
   const restartWith = useCallback(
     (newAllyIds: string[], newEnemyIds?: string[], firstSide?: Side, extras?: BattleExtras) => {
-      genRef.current = createGenerator(newAllyIds, newEnemyIds ?? enemyIds, rng, firstSide, extras ?? { boss, fragmentEquipped })
+      genRef.current = createGenerator(
+        newAllyIds,
+        newEnemyIds ?? enemyIds,
+        rng,
+        firstSide,
+        extras ?? { boss, fragmentEquipped, enemyAtkMultiplier },
+      )
       setResult(null)
       setTurn(0)
       setCombatants([])
     },
-    [enemyIds, rng, boss, fragmentEquipped],
+    [enemyIds, rng, boss, fragmentEquipped, enemyAtkMultiplier],
   )
 
   /** 跑 generator 一步；回傳這一步 yield 的內容，或（done）回傳最終 BattleResult。 */

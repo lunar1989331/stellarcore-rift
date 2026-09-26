@@ -1,0 +1,156 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #eef1f7;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+}
+
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 7, 13, 0.7);
+}
+
+.backLink {
+  color: #7db8ff;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.headerTitle {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffd76a;
+}
+
+.saveStatus {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.mapArea {
+  position: relative;
+  flex: 1;
+  min-height: 480px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+/* 任務二：星橋路線 SVG 疊層——蓋在地圖背景上、節點按鈕下面（DOM 順序在前，節點自然疊在
+   上面），pointer-events:none 避免擋住節點的點擊。 */
+.linkLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.linkFlow {
+  animation: flow 2s linear infinite;
+}
+
+@keyframes flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(6, 7, 13, 0.78);
+  border: 2px solid #444444;
+  color: #eef1f7;
+  cursor: pointer;
+  font: inherit;
+  min-width: 92px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+}
+
+.node:disabled {
+  cursor: not-allowed;
+}
+
+/* 任務一：節點三態視覺強化——locked 灰暗去色、available 金色脈動、completed 綠框常駐光暈。
+   數值照 HANDOFF_PHASE1C 給的規格（opacity/filter/border/box-shadow/animation）逐一對應。 */
+.node.locked {
+  opacity: 0.35;
+  filter: grayscale(80%);
+  border-color: #444444;
+}
+
+.node.available {
+  opacity: 1;
+  border-color: #ffd700;
+  box-shadow: 0 0 12px #ffd700, 0 0 24px rgba(255, 215, 0, 0.4);
+  animation: pulseGold 1.8s ease-in-out infinite;
+}
+
+.node.available:hover {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.node.completed {
+  opacity: 0.85;
+  border-color: #4caf50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
+}
+
+.nodeIcon {
+  font-size: 18px;
+}
+
+.nodeName {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.nodeChapter {
+  font-size: 10px;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+/* 注意事項①：動畫只在 available 播放，locked／completed 保持靜態（都沒有 animation 屬性）。 */
+@keyframes pulseGold {
+  0%,
+  100% {
+    box-shadow: 0 0 8px #ffd700, 0 0 16px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 18px #ffd700, 0 0 36px rgba(255, 215, 0, 0.6);
+  }
+}
+
+.legend {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  padding: 10px;
+  font-size: 12px;
+  opacity: 0.7;
+  background: rgba(6, 7, 13, 0.7);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

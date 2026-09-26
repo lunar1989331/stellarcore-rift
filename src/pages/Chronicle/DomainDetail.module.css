@@ -1,0 +1,120 @@
+.root {
+  min-height: 100vh;
+  color: #eef1f7;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  padding-bottom: 40px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 7, 13, 0.7);
+}
+
+.backLink {
+  color: #7db8ff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 0;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.headerTitle {
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ffd76a;
+}
+
+.nodeList {
+  max-width: 640px;
+  margin: 26px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.nodeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nodeRow.available {
+  border-color: rgba(255, 215, 106, 0.5);
+  box-shadow: 0 0 16px rgba(255, 215, 106, 0.15);
+}
+
+.nodeRow.completed {
+  opacity: 0.75;
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.nodeRow.locked {
+  opacity: 0.45;
+}
+
+.nodeIcon {
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.nodeLabel {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nodeRule {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 79, 109, 0.15);
+  border: 1px solid rgba(255, 79, 109, 0.4);
+  color: #ff9fb0;
+  white-space: nowrap;
+}
+
+.nodeBtn {
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 215, 106, 0.5);
+  background: rgba(255, 215, 106, 0.12);
+  color: #ffd76a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nodeBtn:hover:not(:disabled) {
+  background: rgba(255, 215, 106, 0.22);
+}
+
+.nodeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.progress {
+  max-width: 640px;
+  margin: 20px auto 0;
+  padding: 0 20px;
+  font-size: 12px;
+  opacity: 0.65;
+  text-align: right;
+}
