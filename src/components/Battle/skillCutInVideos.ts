@@ -7,7 +7,8 @@
 // 不用動任何播放邏輯。目前 21 位騎士（不含世界級特殊單位「永恆」，見 data/bosses.ts，不在一般
 // 3v3 名冊、也不用這份對照表）的技能①全部有素材（2026-09-22 補齊索倫／艾克隆／莫德雷斯／格拉
 // 托斯最後 4 位；澤菲爾／艾索為重製版，直接覆蓋同檔名的舊素材）。技能②：渾沌 9 位已補齊
-// （2026-09-23），守護騎士＋獨立騎士仍是 null，等之後的素材。
+// （2026-09-23），守護騎士 9 位＋獨立騎士 3 位共 12 位這次補齊（2026-09-27），21 位騎士的
+// 技能①②全部有素材。
 //
 // 路徑前綴用 import.meta.env.BASE_URL 而不是寫死 '/skill-animations/'——這個專案的
 // vite.config.ts 設定 base:'/stellarcore-rift/'，純字面 '/xxx' 路徑不會被 Vite 轉換，
@@ -24,19 +25,19 @@ export interface KnightCutInVideos {
 
 export const SKILL_VIDEO_MAP: Record<string, KnightCutInVideos> = {
   // ── 獨立騎士 ─────────────────────────────
-  'silver-wing': { skill1: `${VIDEO_BASE}虛空裂切.mp4`, skill2: null },
-  zephyr: { skill1: `${VIDEO_BASE}秘典封印術.mp4`, skill2: null },
-  aiso: { skill1: `${VIDEO_BASE}星核術式解析.mp4`, skill2: null },
+  'silver-wing': { skill1: `${VIDEO_BASE}虛空裂切.mp4`, skill2: `${VIDEO_BASE}頻率共鳴·無名.mp4` },
+  zephyr: { skill1: `${VIDEO_BASE}秘典封印術.mp4`, skill2: `${VIDEO_BASE}遺忘術式·第三共鳴.mp4` },
+  aiso: { skill1: `${VIDEO_BASE}星核術式解析.mp4`, skill2: `${VIDEO_BASE}符文陣列·星域重寫.mp4` },
   // ── 守護騎士陣營 ─────────────────────────
-  osirath: { skill1: `${VIDEO_BASE}星裁天降.mp4`, skill2: null },
-  elixia: { skill1: `${VIDEO_BASE}聖裁光柱.mp4`, skill2: null },
-  laros: { skill1: `${VIDEO_BASE}日冕衝擊.mp4`, skill2: null },
-  aivia: { skill1: `${VIDEO_BASE}翡翠旋風貫穿.mp4`, skill2: null },
-  selena: { skill1: `${VIDEO_BASE}月弦星矢.mp4`, skill2: null },
-  nautrus: { skill1: `${VIDEO_BASE}深海衝擊波.mp4`, skill2: null },
-  frael: { skill1: `${VIDEO_BASE}冰牙裂擊.mp4`, skill2: null },
-  greln: { skill1: `${VIDEO_BASE}熔金重錘.mp4`, skill2: null },
-  sardin: { skill1: `${VIDEO_BASE}蒼壁絕對防禦.mp4`, skill2: null },
+  osirath: { skill1: `${VIDEO_BASE}星裁天降.mp4`, skill2: `${VIDEO_BASE}源核號令.mp4` },
+  elixia: { skill1: `${VIDEO_BASE}聖裁光柱.mp4`, skill2: `${VIDEO_BASE}星域聖癒.mp4` },
+  laros: { skill1: `${VIDEO_BASE}日冕衝擊.mp4`, skill2: `${VIDEO_BASE}黃道烈焰陣.mp4` },
+  aivia: { skill1: `${VIDEO_BASE}翡翠旋風貫穿.mp4`, skill2: `${VIDEO_BASE}生命嵐息.mp4` },
+  selena: { skill1: `${VIDEO_BASE}月弦星矢.mp4`, skill2: `${VIDEO_BASE}月相轉換.mp4` },
+  nautrus: { skill1: `${VIDEO_BASE}深海衝擊波.mp4`, skill2: `${VIDEO_BASE}遺城潮壁.mp4` },
+  frael: { skill1: `${VIDEO_BASE}冰牙裂擊.mp4`, skill2: `${VIDEO_BASE}冰狼群襲.mp4` },
+  greln: { skill1: `${VIDEO_BASE}熔金重錘.mp4`, skill2: `${VIDEO_BASE}熔金壁壘.mp4` },
+  sardin: { skill1: `${VIDEO_BASE}蒼壁絕對防禦.mp4`, skill2: `${VIDEO_BASE}暴風衝撞.mp4` },
   // ── 渾沌騎士陣營 ─────────────────────────
   solren: { skill1: `${VIDEO_BASE}星滅斬.mp4`, skill2: `${VIDEO_BASE}源核引力.mp4` },
   magnos: { skill1: `${VIDEO_BASE}終焰血斬.mp4`, skill2: `${VIDEO_BASE}血鏈縛星.mp4` },
