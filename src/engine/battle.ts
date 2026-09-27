@@ -300,7 +300,7 @@ export type BattleStepEvent =
   | (StepBase & { kind: 'unit-acted'; actorUid: string; events: BattleEvent[] })
   | (StepBase & { kind: 'turn-end'; turn: number; events: BattleEvent[] })
 
-const DEFAULT_MAX_TURNS = 20
+export const DEFAULT_MAX_TURNS = 20
 const SP_HARD_CAP = 5
 // Mina v2 Q15（方案 a）：HP 維持 def×100 的比例關係，DAMAGE_SCALE 從 3.0 拉到 30，
 // 讓對戰能在合理回合數內分出殲滅勝負、低血被動也能真的觸發。

@@ -1,0 +1,378 @@
+/* 對齊樣板 .command-deck：三欄格線（pilot-panel｜skills-panel｜action-panel），
+   斷點與版面重排規則沿用樣板 @media(max-width:1050px)/@media(max-width:700px)。 */
+.deck {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.9fr) minmax(300px, 1.65fr) minmax(200px, 0.8fr);
+  background: linear-gradient(180deg, #17283b, #0a1423);
+  position: relative;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.deck > div {
+  padding: clamp(10px, 1.8vh, 21px) clamp(12px, 1.6vw, 25px);
+  min-width: 0;
+}
+
+.deck > div + div {
+  border-left: 1px solid #59728b66;
+}
+
+.enemyPhase {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(55%);
+}
+
+.panelKicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.19em;
+  color: var(--gold, #e2c388);
+  font-weight: 700;
+}
+
+.panelKicker span:last-child {
+  color: var(--muted, #a8b5c5);
+  letter-spacing: 0.04em;
+  font-weight: 400;
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue, #88bcfa);
+  box-shadow: 0 0 8px var(--blue, #88bcfa);
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* === pilot-panel === */
+.pilotMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: clamp(8px, 1.4vh, 16px) 0;
+}
+
+.pilotPortrait,
+.pilotPortraitFallback {
+  width: clamp(44px, 5.4vw, 64px);
+  height: clamp(50px, 6vw, 72px);
+  object-fit: cover;
+  border: 1px solid #a5a5bacc;
+  clip-path: polygon(0 0, 86% 0, 100% 14%, 100% 100%, 0 100%);
+  flex-shrink: 0;
+}
+
+.pilotPortraitFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent, #eef1f7);
+  font-weight: 700;
+}
+
+.pilotTitle {
+  color: var(--silver, #c2b7f1);
+  font-size: 11px;
+}
+
+.pilotName {
+  font: 700 clamp(14px, 1.7vw, 20px) Georgia, 'Noto Serif TC', serif;
+  margin: 3px 0;
+  letter-spacing: 0.05em;
+  color: var(--paper, #f3f0e6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pilotSub {
+  font-size: 10px;
+  color: #9caabd;
+  letter-spacing: 0.06em;
+}
+
+.pilotNote {
+  font-size: 12px;
+  color: #b9c8d7;
+  border-top: 1px solid #596e8155;
+  padding-top: 10px;
+  line-height: 1.5;
+}
+
+/* === skills-panel === */
+.skillList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.slotEmpty {
+  visibility: hidden;
+}
+
+.skillBtn {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  min-width: 0;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid #6a829a88;
+  border-radius: 4px;
+  background: #102034;
+  color: var(--paper, #f3f0e6);
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.skillBtn:hover:not(:disabled),
+.skillBtn.active {
+  border-color: var(--gold-bright, #ffdea2);
+  background: #273247;
+}
+
+.skillBtn:disabled,
+.skillBtn.disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.skillBtn.locked {
+  color: #9aa1b2;
+}
+
+.iconCircle {
+  width: clamp(28px, 3.2vw, 36px);
+  height: clamp(28px, 3.2vw, 36px);
+  border: 1px solid #c4a779;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--gold-bright, #ffdea2);
+  font-size: clamp(14px, 1.6vw, 20px);
+  flex: none;
+}
+
+.skillText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.skillText strong {
+  display: block;
+  font-size: clamp(11px, 1.05vw, 13px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skillText small {
+  display: block;
+  color: #aebccd;
+  font-size: clamp(8.5px, 0.85vw, 10px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skillCost {
+  margin-left: auto;
+  align-self: flex-start;
+  white-space: nowrap;
+  font-size: 10px;
+  color: var(--gold, #e2c388);
+}
+
+.mountBtn {
+  grid-column: 1 / -1;
+  border-color: #ffd76a55;
+}
+
+.mountBtn .iconCircle {
+  color: #ffd76a;
+}
+
+.mountChargeFill {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: conic-gradient(#ffd76a calc(var(--charge, 0) * 360deg), transparent 0deg);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+/* === action-panel === */
+.selectedAction {
+  min-height: 70px;
+  margin-top: 10px;
+}
+
+.selectedAction small {
+  display: block;
+  color: var(--muted, #a8b5c5);
+  font-size: 11px;
+}
+
+.selectedAction strong {
+  display: block;
+  font: 700 clamp(15px, 1.7vw, 19px) Georgia, 'Noto Serif TC', serif;
+  margin: 3px 0;
+  color: var(--gold-bright, #ffdea2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedAction span {
+  font-size: 11px;
+  color: #b7c7d9;
+}
+
+.execute {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d8ba80;
+  border-radius: 3px;
+  background: linear-gradient(105deg, #7b6745, #c6a872);
+  color: #101722;
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.execute:disabled {
+  border-color: #54687c;
+  background: #283b4e;
+  color: #a5b5c2;
+  cursor: not-allowed;
+}
+
+.execute:hover:not(:disabled) {
+  filter: brightness(1.18);
+}
+
+.spMeter {
+  margin-top: 14px;
+}
+
+.spHeading {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.spHeading small {
+  color: var(--gold, #e2c388);
+}
+
+.spHeading b {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-bright, #ffdea2);
+}
+
+.spCells {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.spCells i {
+  height: 7px;
+  flex: 1 0 14px;
+  background: #34475a;
+  border: 1px solid #71849a;
+  font-style: normal;
+}
+
+.spCells i.filled {
+  background: linear-gradient(90deg, #a48553, #f4d99d);
+  border-color: #dfbd79;
+}
+
+@media (max-width: 1050px) {
+  .deck {
+    grid-template-columns: 1fr 1.6fr;
+  }
+
+  .actionPanel {
+    grid-column: 1 / -1;
+    border-top: 1px solid #59728b66;
+    border-left: 0 !important;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .selectedAction {
+    margin-top: 0;
+    min-height: 0;
+  }
+
+  .spMeter {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .deck {
+    display: block;
+  }
+
+  .deck > div {
+    padding: 12px 14px;
+  }
+
+  .deck > div + div {
+    border-left: 0;
+    border-top: 1px solid #59728b66;
+  }
+
+  .pilotMain {
+    margin: 6px 0;
+  }
+
+  .skillList {
+    margin-top: 8px;
+  }
+
+  .actionPanel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .actionPanel .panelKicker {
+    grid-column: 1 / -1;
+  }
+
+  .selectedAction {
+    min-height: 46px;
+  }
+
+  .execute {
+    align-self: center;
+  }
+
+  .spMeter {
+    grid-column: 1 / -1;
+  }
+}

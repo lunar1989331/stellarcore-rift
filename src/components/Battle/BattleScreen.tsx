@@ -1,37 +1,38 @@
 // 戰鬥畫面：UI 依 UI_SPEC_v1.0_for_ClaudeCode.md（Part A）實裝，資料與回合邏輯依
 // 完整開發規格書 v1.0（Part B）接上 engine/battle.ts 的真實 3v3 回合制模擬——
 // 不再是 battleDemoData.ts 的假陣容/假傷害數字。細節、判讀與跟 Part B 不完全一致
-// 的地方見 CLAUDE.md Session 8。
+// 的地方見 CLAUDE.md Session 8。2026-09-27 起版型／視覺完整對齊 battle-hud-v2 樣板
+// （battle-hud-v2/battle-hud-v2/），細節見同一天的 CLAUDE.md session 記錄。
 //
 // 運作方式：useInteractiveBattle() 包住 engine 的 runBattleSteps() generator；
 // pump() 反覆呼叫 .advance() 往前跑——AI/敵方回合自動播完每一步的動畫再繼續，
 // 直到輪到我方某單位真正需要玩家輸入（need-action）才停下來，把技能列換成那個人的
-// 真實技能/SP/冷卻，等玩家點擊後用 submitAction() 把選擇餵回去繼續跑。
+// 真實技能/SP/冷卻，等玩家選好技能（與目標）按「執行指令」後用 submitChoice() 把選擇
+// 餵回去繼續跑——這個「選擇→（需要目標時）指定目標→執行」三段式流程對齊樣板
+// script.js 的 chooseSkill/chooseUnit/execute 設計，見 CommandDeck.tsx 檔頭註解。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { resolveKnightImage } from '../../assets/knightImages'
-import { ETERNAL_BOSS, ETERNAL_ID } from '../../data/bosses'
+import { BOSS_MAX_TURNS, ETERNAL_BOSS, ETERNAL_ID } from '../../data/bosses'
 import { getKnight } from '../../data/knights'
 import { FRAGMENT_STELLAR_SOVEREIGNTY, grantStellarFragment, hasStellarFragment } from '../../data/relics'
 import type { Skill } from '../../data/skills'
 import { FACTION_COLORS } from '../../data/types'
-import type { BattleResult, BattleStepEvent, Combatant, PlayerActionRequest, PlayerChoice, Side } from '../../engine/battle'
-import { ActionBar } from './ActionBar'
+import {
+  DEFAULT_MAX_TURNS,
+  type BattleResult,
+  type BattleStepEvent,
+  type Combatant,
+  type PlayerActionRequest,
+  type PlayerChoice,
+  type Side,
+} from '../../engine/battle'
 import { BattleFeed, type FeedEntry } from './BattleFeed'
 import { ChronicleResultActions } from '../../pages/Chronicle/BattleResult'
 import { needsEnemyTarget, planAnimation, toBattleUnitSlot, type PlannedHit } from './battleAdapter'
-import {
-  ALLY_IDS,
-  CHAOS_BANNER,
-  GUARDIAN_BANNER,
-  GUARDIAN_BANNER_SANCTUARY,
-  LEVEL_NAME,
-  LEVEL_NAME_EN,
-  generateEnemyIds,
-  resolveTeamBannerFaction,
-} from './battleDemoData'
+import { ALLY_IDS, LEVEL_NAME, LEVEL_NAME_EN, generateEnemyIds, resolveTeamBannerFaction } from './battleDemoData'
 import { ATTR_COLORS } from './battleTheme'
 import { BattleField } from './BattleField'
-import { FactionBanner } from './FactionBanner'
+import { CommandDeck, MOUNT_FUSE_ID } from './CommandDeck'
 import type { FloatingHit } from './FloatingNumber'
 import { spawnHitParticles } from './hitParticles'
 import { getSkillCutInVideo } from './skillCutInVideos'
@@ -98,6 +99,10 @@ function sanctuaryFxOf(events: readonly { meta?: Record<string, unknown> }[]): S
 }
 const SANCTUARY_FX_MS: Record<SanctuaryFx, number> = { shieldBreak: 1300, fusion: 2600, fragment: 2000 }
 
+/** 目前指令面板上「已選但還沒執行」的動作——對齊樣板 script.js 的 skillIndex 概念，
+ * 差別是坐騎合體不是 data/skills.ts 裡的技能，用獨立的 union 分支表示。 */
+type PendingAction = { kind: 'skill'; skill: Skill } | { kind: 'mount-fuse' } | null
+
 export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode; chronicle?: ChronicleBattleConfig }) {
   const isSanctuary = mode === 'eternal_sanctuary'
   const isChronicle = mode === 'chronicle'
@@ -131,14 +136,16 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
   const [displayed, setDisplayed] = useState<Combatant[]>([])
   const [pendingRequest, setPendingRequest] = useState<PlayerActionRequest | null>(null)
   const [activeUnitId, setActiveUnitId] = useState<string | null>(null)
-  // 問題①：點擊我方卡片可以「預覽」該騎士的技能列（底部行動列切換顯示），
+  // 問題①：點擊我方卡片可以「預覽」該騎士的技能列（底部指令區切換顯示），
   // 但只有真正輪到他行動（pendingRequest 指向他）時按鈕才會真的可以按——
   // 見下面 isPlayersTurn 的判斷，跟原本的規則完全不衝突，純粹多一個瀏覽用途。
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
-  // 項目 C：瞄準模式中的技能——非 null 時，敵方存活單位（依前後排規則過濾）會顯示準星，
-  // 點擊即送出 {skillId, targetUid} 給引擎；引擎本來就會驗證目標合法性，見 battleAdapter.ts
-  // needsEnemyTarget() 的判斷依據。
-  const [targetingSkill, setTargetingSkill] = useState<Skill | null>(null)
+  // battle-hud-v2 樣板整合：對齊樣板「選技能→（需要目標）選目標→執行指令」三段式流程——
+  // pendingAction 是玩家已經點選、但還沒按「執行指令」的動作；pendingTargetUid 是選技能後
+  // （若需要目標）玩家點的敵方卡片。兩者都要等 handleExecute() 呼叫才真的送給引擎，
+  // 取代舊版「點技能／點敵方卡片就立刻發動」的即時流程。
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null)
+  const [pendingTargetUid, setPendingTargetUid] = useState<string | undefined>(undefined)
   const [overlayName, setOverlayName] = useState<string | null>(null)
   const [showDarken, setShowDarken] = useState(false)
   const [showSlash, setShowSlash] = useState(false)
@@ -254,7 +261,7 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
       await sleep(200)
       if (plan.skillName) {
         // 招式動畫 cut-in（2026-09-19 指令）：只有真正的技能①②（不是普通攻擊／坐騎合體／
-        // 被動）才呼叫，skillIndex 算法對齊 ActionBar 的 activeSkills[0]/[1]（見上面
+        // 被動）才呼叫，skillIndex 算法對齊 CommandDeck 的 activeSkills[0]/[1]（見上面
         // playCutIn 註解）。【觸發規則】明講「只有玩家方騎士」才觸發——加上
         // cutInActor?.side==='ally' 這個判斷擋掉敵方；沒有這個判斷的話敵方用技能①②
         // 一樣會滿足 activeIdx===0/1，也會嘗試播放（目前敵方沒人有素材所以看不出差異，
@@ -442,30 +449,28 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
   if (currentActorUid !== trackedActorUid) {
     setTrackedActorUid(currentActorUid)
     setSelectedUnitId(null)
-    setTargetingSkill(null)
+    setPendingAction(null)
+    setPendingTargetUid(undefined)
   }
 
-  // 項目 C：Esc 隨時可以取消瞄準模式。
+  // 項目 C：Esc 隨時可以取消目前選取的技能／坐騎合體（連同已鎖定的目標一起清掉）。
   useEffect(() => {
-    if (!targetingSkill) return
+    if (!pendingAction) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setTargetingSkill(null)
+      if (e.key === 'Escape') {
+        setPendingAction(null)
+        setPendingTargetUid(undefined)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [targetingSkill])
+  }, [pendingAction])
 
   // UI 改善規格書 v2.0 項目 C：引擎沒有真的「我方回合／對方回合」這種整體階段（每回合是
   // 逐一單位照速度值交錯行動），這裡用 pendingRequest 有無來近似——有 = 正在等玩家對某個
   // 我方單位下指令（我方回合），沒有 = pump() 正在自動播放 AI／敵方單位的行動（對方回合）。
-  // 見 TopBar.tsx 開頭註解與 CLAUDE.md Session 16 的完整說明。
-  // phase 只餵 TopBar／ActionBar 這些「目前是不是在等玩家輸入」的次要指示器——不再驅動
-  // TurnPhaseBanner 本身。橫幅的掛上/拿掉時機改由 runPhaseTransition()（上面）在 pump() 的
-  // 自動播放流程裡用 await sleep() 精準控制，不再是這裡被動比對 phase 變化的 useEffect
-  // （舊版跟 pump() 的自動播放迴圈完全脫鉤，是「切換太快、缺乏前置演出」的根因）。turnBanner
-  // 的 state 宣告移到上面（telegraphUnitId 旁邊），避免 runPhaseTransition 在閉包裡引用到
-  // 還沒宣告的 setTurnBanner。
   const phase: TurnPhase = pendingRequest ? 'player' : 'enemy'
+  const maxTurn = isSanctuary ? BOSS_MAX_TURNS : DEFAULT_MAX_TURNS
 
   // 攻守回合切換節奏強化規格書（2026-09-19）追加指令：TurnPhaseBanner 顏色/文字改依「這一側
   // 隊伍實際的陣營組成」決定（守護/渾沌/獨立多數決，見 battleDemoData.ts 的
@@ -473,7 +478,8 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
   // team 本身已經被前/後排重排過，見上面 teamPickOrder 的宣告），敵方用 enemyIds（沒有
   // 「玩家選角」這回事，直接用名單的陣列順序當作平手時的「第一個」，跟主人說的「同上邏輯」
   // 一致）。team/enemyIds 還沒備妥時（TeamSelect 畫面）用預設值頂著，反正這時候戰場還沒
-  // 顯示，這兩個值不會真的被用到。
+  // 顯示，這兩個值不會真的被用到。battle-hud-v2 樣板整合後，這兩個值同時也是 BattleField
+  // 的 team-heading（樣板 team-heading 徽章／隊名）要顯示哪個陣營的依據。
   const allyBannerFaction = useMemo(
     () => resolveTeamBannerFaction(teamPickOrder ?? team ?? ALLY_IDS),
     [teamPickOrder, team],
@@ -485,7 +491,8 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     setPendingRequest(null)
     setActiveUnitId(null)
     setSelectedUnitId(null)
-    setTargetingSkill(null)
+    setPendingAction(null)
+    setPendingTargetUid(undefined)
     setOverlayName(null)
     setShowDarken(false)
     setShowSlash(false)
@@ -539,17 +546,18 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     [resetBattleUiState, restartWith, isSanctuary, isChronicle, chronicle],
   )
 
-  // 項目 C：瞄準模式中點別張我方卡片沒有意義（不能臨陣換人選目標），直接當成「取消瞄準」；
-  // 不在瞄準模式時維持原本的預覽切換行為。
+  // 項目 C：已經選了技能／坐騎合體時，點別張我方卡片沒有意義（不能臨陣換人選目標），
+  // 直接當成「取消目前選取」；沒有待執行動作時維持原本的預覽切換行為。
   const handleSelectAlly = useCallback(
     (id: string) => {
-      if (targetingSkill) {
-        setTargetingSkill(null)
+      if (pendingAction) {
+        setPendingAction(null)
+        setPendingTargetUid(undefined)
         return
       }
       setSelectedUnitId(id)
     },
-    [targetingSkill],
+    [pendingAction],
   )
 
   const allies = displayed.filter((c) => c.side === 'ally')
@@ -569,11 +577,11 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     allies.find((c) => c.alive) ??
     allies[0]
 
-  const accentColor = focused ? ATTR_COLORS[focused.knight.coreAttr] : '#4fa3ff'
+  const accentColor = focused ? ATTR_COLORS[focused.knight.coreAttr] : '#88bcfa'
   const activeSkills = focused ? focused.skills.filter((s) => s.id !== 'normal') : []
   const normalSkill = focused?.skills.find((s) => s.id === 'normal')
   const passiveSkill = focused?.passives[0]
-  // battle-hud-v2 視覺樣板整合：ActionBar 的「當前行動者」小面板（樣板的 pilot-panel）——
+  // battle-hud-v2 視覺樣板整合：CommandDeck 的「當前行動者」小面板（樣板的 pilot-panel）——
   // 沿用同一個 focused，不是另外算一份，跟卡片上的金框「當前行動」標籤永遠指同一個人。
   const pilotPortraitUrl = focused ? resolveKnightImage(focused.knight.image) : undefined
   const pilotRoleLabel = focused
@@ -600,58 +608,68 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     [isPlayersTurn, pendingRequest, focused, pump],
   )
 
-  // 項目 C：需要指定目標的技能（單體攻擊／單體指向的 debuff…見 needsEnemyTarget）先進瞄準模式，
-  // 等玩家點敵方卡片才真的送出；不需要選目標的維持原本「按下去就發動」。
   // 永恆的聖域：場上只有 Boss 一個敵人，選技能後不需要再點一次目標，直接指定它。
   const soleBossUid = isSanctuary ? enemies.find((c) => c.alive && c.boss)?.uid : undefined
 
-  const handleCastSkill = useCallback(
+  const pendingSkill = pendingAction?.kind === 'skill' ? pendingAction.skill : undefined
+  const pendingNeedsTarget = pendingSkill ? needsEnemyTarget(pendingSkill) : false
+
+  // battle-hud-v2 樣板整合：對齊樣板 chooseSkill()——點技能只是把它標記成「目前選取」
+  // （CommandDeck 的 .active 高亮），不會立刻發動；需要目標的技能若場上只有唯一合法目標
+  // （永恆的聖域的 Boss），直接幫玩家鎖定，省去多點一次的麻煩，但仍要按「執行指令」才真的
+  // 送出去，跟一般情況一致，不搞特例流程。
+  const handleSelectSkill = useCallback(
     (skill: Skill) => {
       if (!isPlayersTurn) return
-      if (needsEnemyTarget(skill)) {
-        if (soleBossUid) submitChoice(skill.id, soleBossUid)
-        else setTargetingSkill(skill)
-        return
-      }
-      submitChoice(skill.id)
+      setPendingAction({ kind: 'skill', skill })
+      setPendingTargetUid(needsEnemyTarget(skill) ? soleBossUid : undefined)
     },
-    [isPlayersTurn, submitChoice, soleBossUid],
+    [isPlayersTurn, soleBossUid],
   )
 
-  const handleNormalAttack = useCallback(() => {
-    if (!isPlayersTurn || !normalSkill) return
-    if (needsEnemyTarget(normalSkill)) {
-      if (soleBossUid) submitChoice(normalSkill.id, soleBossUid)
-      else setTargetingSkill(normalSkill)
-      return
-    }
-    submitChoice(normalSkill.id)
-  }, [isPlayersTurn, normalSkill, submitChoice, soleBossUid])
-
-  const handleMountFuse = useCallback(() => {
+  const handleSelectMountFuse = useCallback(() => {
     if (!isPlayersTurn) return
-    submitChoice('mount-fuse')
-  }, [isPlayersTurn, submitChoice])
+    setPendingAction({ kind: 'mount-fuse' })
+    setPendingTargetUid(undefined)
+  }, [isPlayersTurn])
 
-  // 項目 C：瞄準模式中，敵方存活單位依前後排規則決定誰是合法目標（跟 engine pickTarget()
-  // 同一套邏輯的簡化版——沒有另外判斷坐騎飛行/嘲諷，選到了引擎自己也會驗證，見
-  // battleAdapter.ts needsEnemyTarget() 的說明）；點擊合法目標即送出並離開瞄準模式。
+  // 項目 C：敵方存活單位依前後排規則決定誰是合法目標（跟 engine pickTarget() 同一套邏輯的
+  // 簡化版——沒有另外判斷坐騎飛行/嘲諷，選到了引擎自己也會驗證，見 battleAdapter.ts
+  // needsEnemyTarget() 的說明）。這個集合在玩家鎖定目標「之後」仍然保留（不像樣板選了就沒
+  // 別的選項可看），讓玩家能改點別的合法目標換人——UnitCard 用 targeted 另外標出「目前鎖定
+  // 的是哪一個」，兩者不衝突。
   const targetableEnemyUids = useMemo(() => {
-    if (!targetingSkill) return undefined
+    if (!pendingSkill || !pendingNeedsTarget) return undefined
     const aliveEnemies = enemies.filter((c) => c.alive)
-    if (targetingSkill.piercing) return new Set(aliveEnemies.map((c) => c.uid))
+    if (pendingSkill.piercing) return new Set(aliveEnemies.map((c) => c.uid))
     const front = aliveEnemies.filter((c) => c.row === 'front')
     return new Set((front.length ? front : aliveEnemies).map((c) => c.uid))
-  }, [targetingSkill, enemies])
+  }, [pendingSkill, pendingNeedsTarget, enemies])
 
   const handleSelectEnemy = useCallback(
     (uid: string) => {
-      if (!targetingSkill) return
-      submitChoice(targetingSkill.id, uid)
-      setTargetingSkill(null)
+      if (!pendingNeedsTarget || !targetableEnemyUids?.has(uid)) return
+      setPendingTargetUid(uid)
     },
-    [targetingSkill, submitChoice],
+    [pendingNeedsTarget, targetableEnemyUids],
   )
+
+  // 對齊樣板 execute()：按下「執行指令」才真的把選好的技能／目標送給引擎；坐騎合體固定送
+  // MOUNT_FUSE_ID（引擎的保留字，見 engine/battle.ts PlayerChoice 註解），一般技能才帶
+  // pendingTargetUid（沒有目標需求的技能這個欄位本來就是 undefined，引擎自己會忽略）。
+  const handleExecute = useCallback(() => {
+    if (!pendingAction) return
+    if (pendingAction.kind === 'mount-fuse') {
+      submitChoice(MOUNT_FUSE_ID)
+    } else {
+      if (pendingNeedsTarget && !pendingTargetUid) return
+      submitChoice(pendingAction.skill.id, pendingTargetUid)
+    }
+    setPendingAction(null)
+    setPendingTargetUid(undefined)
+  }, [pendingAction, pendingNeedsTarget, pendingTargetUid, submitChoice])
+
+  const lockedTargetName = pendingTargetUid ? enemies.find((c) => c.uid === pendingTargetUid)?.knight.name : undefined
 
   // 問題②：team 還沒選定就顯示選陣容畫面，不進戰場（見上面 team state 與 pump 的 effect gate）。
   if (!team) {
@@ -689,38 +707,26 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
           levelName={isSanctuary ? '永恆的聖域' : isChronicle ? chronicle!.domainName : LEVEL_NAME}
           levelNameEn={isSanctuary ? 'ETERNAL SANCTUARY' : isChronicle ? 'CHRONICLE MODE' : LEVEL_NAME_EN}
           turn={turn}
+          maxTurn={maxTurn}
           phase={phase}
           onRestart={handleRestart}
         />
       </div>
 
       <div className={styles.stage}>
-        <FactionBanner
-          side="guardian"
-          title={GUARDIAN_BANNER.title}
-          lines={GUARDIAN_BANNER.lines}
-          sceneLabelEn={(isSanctuary ? GUARDIAN_BANNER_SANCTUARY : GUARDIAN_BANNER).sceneLabelEn}
-          sceneName={(isSanctuary ? GUARDIAN_BANNER_SANCTUARY : GUARDIAN_BANNER).sceneName}
-          sceneSubtitle={(isSanctuary ? GUARDIAN_BANNER_SANCTUARY : GUARDIAN_BANNER).sceneSubtitle}
-        />
-        <FactionBanner
-          side="chaos"
-          title={CHAOS_BANNER.title}
-          lines={CHAOS_BANNER.lines}
-          sceneName={CHAOS_BANNER.sceneName}
-          sceneSubtitle={CHAOS_BANNER.sceneSubtitle}
-        />
-
         <BattleField
           enemyFormation={enemyFormation}
           allyFormation={allyFormation}
+          enemyFaction={enemyBannerFaction}
+          allyFaction={allyBannerFaction}
           getKnight={getKnight}
           currentUnitId={activeUnitId ?? ''}
           hits={hits}
           castingUnitId={activeUnitId}
           onSelectAlly={handleSelectAlly}
-          onSelectEnemy={targetingSkill ? handleSelectEnemy : undefined}
+          onSelectEnemy={pendingNeedsTarget ? handleSelectEnemy : undefined}
           targetableEnemyUids={targetableEnemyUids}
+          lockedTargetUid={pendingTargetUid}
           sceneVariant={sceneVariant}
           telegraphUnitId={telegraphUnitId}
           cutInVideoUrl={cutInVideoUrl}
@@ -779,13 +785,14 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
       </div>
 
       <div className={styles.actionBarWrap}>
-        <ActionBar
+        <CommandDeck
           pilotName={focused?.knight.name ?? '—'}
           pilotNameEn={focused?.knight.nameEn ?? ''}
           pilotRoleLabel={pilotRoleLabel}
           pilotPortraitUrl={pilotPortraitUrl}
           skill1={activeSkills[0]}
           skill2={activeSkills[1]}
+          normalSkill={normalSkill}
           passiveSkill={passiveSkill}
           passiveTriggerLabel={passiveSkill ? (TRIGGER_LABEL[passiveSkill.trigger ?? ''] ?? '被動觸發') : '—'}
           cooldowns={focused?.cooldowns ?? {}}
@@ -796,12 +803,15 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
           mountCharge={focused?.mountCharge ?? 0}
           mountFusedOnce={!!focused?.mountFusedOnce}
           mountLabel={focused?.mount?.name ?? '—'}
+          pendingId={pendingAction?.kind === 'mount-fuse' ? MOUNT_FUSE_ID : pendingAction?.skill.id}
+          pendingNeedsTarget={pendingNeedsTarget}
+          lockedTargetName={lockedTargetName}
           busy={busy || !isPlayersTurn || !!revealedResult}
           enemyPhase={phase === 'enemy'}
           accentColor={accentColor}
-          onCastSkill={handleCastSkill}
-          onNormalAttack={handleNormalAttack}
-          onFuse={handleMountFuse}
+          onSelectSkill={handleSelectSkill}
+          onSelectMountFuse={handleSelectMountFuse}
+          onExecute={handleExecute}
         />
       </div>
 

@@ -149,30 +149,7 @@ export function generateEnemyIds(playerIds: readonly string[], count = 3): strin
   return [...primary, ...supplement].slice(0, count)
 }
 
-// UI 全面升級規格書 v1.0 · 項目 B：旗幟欄改成「陣營名＋口號→分隔線→場景資訊」的固定結構。
-// 守護陣營的場景資訊就是這場戰鬥本身（星環聖殿），渾沌陣營則是獨立的陣營flavor文字
-// （幽星辰墜落／我們仍將重見黎明），不是同一個場景名稱的重複——兩邊本來就沒有共用欄位，
-// 拆成 sceneLabelEn（僅守護側顯示）／sceneName／sceneSubtitle 三個欄位，取代舊版
-// subtitleEn/subtitleZh/footnote 那組語意含糊的欄位。
-export const GUARDIAN_BANNER = {
-  title: '守護陣營',
-  lines: ['以星為誓', '守護一切光明'],
-  sceneLabelEn: LEVEL_NAME_EN,
-  sceneName: '廢墟平原',
-  sceneSubtitle: '選擇你的陣營，決一勝負',
-}
-
-/** 永恆的聖域維持星環聖殿場景，旗幟文案沿用舊版。 */
-export const GUARDIAN_BANNER_SANCTUARY = {
-  ...GUARDIAN_BANNER,
-  sceneLabelEn: 'STELLAR TEMPLE',
-  sceneName: '星環聖殿',
-  sceneSubtitle: '破碎中仍閃耀',
-}
-
-export const CHAOS_BANNER = {
-  title: '混沌陣營',
-  lines: ['盡是虛空流血', '世界能重生'],
-  sceneName: '幽星辰墜落',
-  sceneSubtitle: '我們仍將重見黎明',
-}
+// battle-hud-v2 樣板整合（2026-09-27）：舊版側邊旗幟欄（陣營名＋口號→分隔線→場景資訊）已經
+// 被 FactionBanner.tsx 改版成樣板的窄橫幅 team-heading（陣營徽章＋隊名＋存活數，見那個檔案
+// 開頭的說明），不再需要這裡的口號／場景描述文字組——GUARDIAN_BANNER／GUARDIAN_BANNER_SANCTUARY／
+// CHAOS_BANNER 三個常數因此移除，沒有任何地方還在讀。

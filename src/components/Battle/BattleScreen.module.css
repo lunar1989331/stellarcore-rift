@@ -1,39 +1,67 @@
+/* battle-hud-v2 樣板完整整合（2026-09-27）：色票／版面骨架對齊
+   battle-hud-v2/battle-hud-v2/styles.css 的 :root 變數與 .app-shell 版面。
+   CSS 變數刻意掛在 .root（這個畫面自己的最外層），不是全域 :root——避免滲透到
+   圖鑑頁／TeamSelect／Chronicle Mode 這些沒有要求跟著換色的頁面。 */
 .root {
+  --ink: #08101d;
+  --surface: #0d1a2b;
+  --panel: #101d2b;
+  --line: #63748c66;
+  --gold: #e2c388;
+  --gold-bright: #ffdea2;
+  --paper: #f3f0e6;
+  --muted: #a8b5c5;
+  --blue: #88bcfa;
+  --red: #e89a9e;
+  --silver: #c2b7f1;
+
   position: relative;
   width: 100%;
-  height: 100vh;
-  min-height: 520px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: #05060b;
-  color: #eef1f7;
-  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei',
-    sans-serif;
+  /* 樣板本身是一般可捲動網頁（.battle-stage 有上限高度，不是強制塞滿 100vh），不是固定
+     視窗遊戲畫面——這次刻意跟著改成可以捲動：手機版尤其受惠，之前每個 session 為了塞進
+     100vh 跟卡片版面互相拉扯的問題（CLAUDE.md Session 17/18）從根本消失。 */
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--ink);
+  color: var(--paper);
+  font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
 }
 
 .topBarWrap {
   flex: 0 0 auto;
-  height: clamp(38px, 6.5vh, 60px);
 }
 
+/* 樣板 .battle-stage：height:min(57vw,640px)，窄螢幕才改用 min-height 讓內容自己撐開。 */
 .stage {
   position: relative;
-  flex: 1;
-  min-height: 0;
-  display: flex;
+  flex: 0 0 auto;
+  isolation: isolate;
+  height: min(52vw, 620px);
+  min-height: 460px;
   overflow: hidden;
+  background: var(--ink);
 }
 
+@media (max-width: 700px) {
+  .stage {
+    height: auto;
+    min-height: 560px;
+  }
+}
+
+/* 樣板 .command-deck：金色頂框 + 深色漸層底。 */
 .actionBarWrap {
   flex: 0 0 auto;
-  height: clamp(88px, 15vh, 132px);
+  border-top: 2px solid #ae9362;
+  box-shadow: 0 -8px 24px #07101dbb;
 }
 
-/* battle-hud-v2 視覺樣板整合：底部戰報／行動序列列，樣板的 bottom-strip 對應區塊。 */
+/* 樣板 .bottom-strip。 */
 .feedWrap {
   flex: 0 0 auto;
-  height: clamp(30px, 4.5vh, 40px);
 }
 
 .resultBanner {
@@ -47,40 +75,41 @@
   align-items: center;
   gap: 10px;
   padding: 28px 48px;
-  border-radius: 18px;
-  background: rgba(6, 7, 13, 0.9);
-  border: 1px solid rgba(255, 215, 106, 0.4);
-  box-shadow: 0 0 60px rgba(255, 215, 106, 0.25);
+  border-radius: 10px;
+  background: rgba(6, 7, 13, 0.92);
+  border: 1px solid rgba(226, 195, 136, 0.5);
+  box-shadow: 0 0 60px rgba(226, 195, 136, 0.25);
   text-align: center;
+  max-width: min(92vw, 420px);
 }
 
 .resultTitle {
-  font-size: clamp(22px, 3vw, 36px);
-  font-weight: 800;
-  color: #ffd76a;
+  font: 800 clamp(22px, 3vw, 36px) Georgia, 'Noto Serif TC', serif;
+  color: var(--gold-bright);
   letter-spacing: 0.08em;
-  text-shadow: 0 0 16px rgba(255, 215, 106, 0.7);
+  text-shadow: 0 0 16px rgba(255, 222, 162, 0.7);
 }
 
 .resultMeta {
   font-size: 13px;
-  opacity: 0.8;
+  color: var(--muted);
 }
 
 .resultBtn {
   margin-top: 6px;
   padding: 8px 22px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 215, 106, 0.5);
-  background: rgba(255, 215, 106, 0.12);
-  color: #ffd76a;
+  border-radius: 4px;
+  border: 1px solid #d8ba80;
+  background: linear-gradient(105deg, #7b6745, #c6a872);
+  color: #101722;
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   cursor: pointer;
 }
 
 .resultBtn:hover {
-  background: rgba(255, 215, 106, 0.22);
+  filter: brightness(1.15);
 }
 
 /* 永恆的聖域通關獎勵：星核君臨碎片 */
@@ -117,10 +146,10 @@
 .resultBtnSecondary {
   margin-top: 6px;
   padding: 8px 22px;
-  border-radius: 999px;
+  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.06);
-  color: #eef1f7;
+  color: var(--paper);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -128,4 +157,12 @@
 
 .resultBtnSecondary:hover {
   background: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
