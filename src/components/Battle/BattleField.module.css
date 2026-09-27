@@ -96,8 +96,18 @@
   justify-content: center;
 }
 
-/* 對齊樣板 .enemy-line/.ally-line：置中一欄，最寬 1040px。 */
+/* 對齊樣板 .enemy-line/.ally-line：置中一欄，最寬 1040px。
+   flex: 0 0 auto 是這裡的關鍵——.row 是 .enemyArea/.allyArea（display:flex;
+   flex-direction:column）的直接子元素，沒有明講 flex 屬性時預設是 `0 1 auto`
+   （會縮）。.enemyArea/.allyArea 又設了 overflow:hidden，這會把 flex 子元素的
+   automatic minimum size 從「不小於內容」改成「可以縮到 0」——兩者疊加的結果是
+   當 .stage 給的高度不夠擺下「後排＋前排」兩排卡片時，瀏覽器會把其中一排整個
+   壓扁（卡片高度被壓縮、肖像/名稱/HP 疊在一起裁切），而不是照卡片原本的高度
+   顯示、超出的部分再裁掉。加回 flex:0 0 auto 讓每一排永遠維持卡片實際需要的
+   高度，真的放不下時交由 overflow:hidden 整排裁切（該發生的機率極低，因為下面
+   已經把 .stage 的高度預算重新算過，見 BattleScreen.module.css 的 .stage）。 */
 .row {
+  flex: 0 0 auto;
   width: 100%;
   max-width: 1040px;
   align-self: center;

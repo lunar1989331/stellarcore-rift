@@ -34,13 +34,19 @@
   flex: 0 0 auto;
 }
 
-/* 樣板 .battle-stage：height:min(57vw,640px)，窄螢幕才改用 min-height 讓內容自己撐開。 */
+/* 樣板 .battle-stage 原本是 height:min(57vw,640px)，但那是樣板「敵我各一排、不分前後排」
+   的版面算出來的高度——我們的戰場多了前/後排（Q3 的真實遊戲規則，見 BattleField.tsx
+   檔頭註解），敵我雙方各要疊兩排卡片，需要的垂直空間接近樣板的兩倍。沿用樣板那組數字會讓
+   .stage 給的高度不夠擺下四排卡片，UnitCard 的 height:clamp(108px,13.4vw,156px) 在
+   .enemyArea/.allyArea 的 flex 版面裡就會被壓縮、裁切（見 BattleField.module.css 的
+   .row 那段註解）。這裡改用「卡片最高 156px × 4 排＋兩條 team-heading＋stage-middle＋
+   padding」實際反推出來的高度預算，取代直接套用樣板的公式。 */
 .stage {
   position: relative;
   flex: 0 0 auto;
   isolation: isolate;
-  height: min(52vw, 620px);
-  min-height: 460px;
+  height: clamp(720px, 64vw, 880px);
+  min-height: 720px;
   overflow: hidden;
   background: var(--ink);
 }
