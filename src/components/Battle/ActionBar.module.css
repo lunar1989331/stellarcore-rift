@@ -33,6 +33,79 @@
   user-select: none;
 }
 
+/* battle-hud-v2 視覺樣板整合：左側「當前行動者」小面板，對應樣板的 pilot-panel——
+   讓玩家不用瞇眼看戰場卡片，也能一眼確認「現在技能列是誰的」。 */
+.pilotPanel {
+  flex: 0 0 clamp(88px, 11vw, 152px);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: clamp(8px, 1.2vw, 16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  min-width: 0;
+}
+
+.pilotPortrait,
+.pilotPortraitFallback {
+  flex-shrink: 0;
+  width: clamp(40px, 4.6vw, 60px);
+  height: clamp(46px, 5.3vw, 68px);
+  object-fit: cover;
+  border: 1.5px solid var(--accent, #a5a5ba);
+  clip-path: polygon(0 0, 86% 0, 100% 14%, 100% 100%, 0 100%);
+}
+
+.pilotPortraitFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent, #eef1f7);
+  font-weight: 700;
+}
+
+.pilotInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pilotRole {
+  font-size: clamp(7.5px, 0.85vw, 10px);
+  color: var(--accent, #c2b7f1);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pilotName {
+  font-size: clamp(11px, 1.3vw, 16px);
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pilotNameEn {
+  display: none;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .pilotNameEn {
+    display: block;
+  }
+}
+
 .buttons {
   flex: 1;
   display: grid;
@@ -311,4 +384,69 @@
   margin-top: 2px;
   font-size: 9px;
   opacity: 0.6;
+}
+
+/* 手機版（battle-hud-v2 視覺樣板整合）：pilotPanel／mountSlot／noItemSlot／spDial 全部是
+   `flex: 0 0 <clamp>`（flex-shrink:0，語意上就是「絕不縮」），四個固定寬度欄位 + 技能列 grid
+   加起來遠超過 375px 手機寬度時，唯一有 flex-shrink 的 `.buttons`（flex:1）會被擠到 0 寬、
+   技能圖示疊在一起——這是這次加 pilotPanel 之前就存在的風險（原本的欄位加總在 375px 已經很
+   緊繃，這次多一欄位是壓垮它的最後一根稻草）。窄螢幕下拿掉純裝飾的無道具佔位、把有文字的
+   輔助欄位收成純圖示，把寬度預算讓給真正要操作的技能按鈕。 */
+@media (max-width: 480px) {
+  .noItemSlot {
+    display: none;
+  }
+
+  .pilotPanel {
+    flex: 0 0 44px;
+    padding-right: 4px;
+  }
+
+  .pilotPortrait,
+  .pilotPortraitFallback {
+    width: 38px;
+    height: 44px;
+  }
+
+  .pilotInfo {
+    display: none;
+  }
+
+  .mountSlot {
+    flex: 0 0 44px;
+  }
+
+  .mountSlot .info {
+    display: none;
+  }
+
+  .spDial {
+    padding-left: 6px;
+    gap: 4px;
+  }
+
+  .spDialRing {
+    width: 40px;
+    height: 40px;
+  }
+
+  .buttons {
+    gap: 4px;
+  }
+
+  .skillBtn {
+    gap: 3px;
+    padding: 4px;
+  }
+
+  .iconCircle {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .desc,
+  .descEn {
+    display: none;
+  }
 }

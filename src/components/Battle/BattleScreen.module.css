@@ -30,6 +30,12 @@
   height: clamp(88px, 15vh, 132px);
 }
 
+/* battle-hud-v2 視覺樣板整合：底部戰報／行動序列列，樣板的 bottom-strip 對應區塊。 */
+.feedWrap {
+  flex: 0 0 auto;
+  height: clamp(30px, 4.5vh, 40px);
+}
+
 .resultBanner {
   position: absolute;
   left: 50%;

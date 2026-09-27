@@ -296,7 +296,7 @@ interface StepBase {
 /** runBattleSteps() 每次 yield 的內容——引擎接線規格 §24 BattleEvent 的單機版對應 */
 export type BattleStepEvent =
   | (StepBase & { kind: 'need-action'; request: PlayerActionRequest })
-  | (StepBase & { kind: 'turn-start'; turn: number; events: BattleEvent[] })
+  | (StepBase & { kind: 'turn-start'; turn: number; events: BattleEvent[]; order: string[] })
   | (StepBase & { kind: 'unit-acted'; actorUid: string; events: BattleEvent[] })
   | (StepBase & { kind: 'turn-end'; turn: number; events: BattleEvent[] })
 
@@ -1905,12 +1905,20 @@ export function* runBattleSteps(
       }
     }
     void spMode
-    yield { kind: 'turn-start', turn, events: events.slice(turnStartBegin), combatants }
-
+    // UI 戰鬥 HUD 整合（2026-09-27）：order 提前到 yield 之前算好，隨 turn-start 一併帶出去
+    // 給畫面顯示「本回合行動序列」——純粹提前計算時機，不影響 RNG 消耗順序（yield 只是暫停
+    // generator，中間不會有別的程式碼跑去消耗 rng()），也不改變排序邏輯本身。
     const firstRank = (c: Combatant) => (turn === 1 && config.firstSide ? (c.side === config.firstSide ? 0 : 1) : 0)
     const order = combatants
       .filter((c) => c.alive)
       .sort((a, b) => firstRank(a) - firstRank(b) || effSpd(b) - effSpd(a) || (rng() < 0.5 ? -1 : 1))
+    yield {
+      kind: 'turn-start',
+      turn,
+      events: events.slice(turnStartBegin),
+      combatants,
+      order: order.map((c) => c.uid),
+    }
     // 項目 B 換人代打（主人 2026-09-12 拍板）：本回合已經行動過的人——包含被叫去代打、提前
     // 用掉這回合機會的替補——輪到自己原本的速度排序位置時整個跳過，不會再行動第二次；
     // 「不補行動格」＝代打掉的那個原始 actor 這回合就是沒出手，不會有另一個格位補給它。

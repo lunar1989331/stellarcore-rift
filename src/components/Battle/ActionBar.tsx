@@ -16,6 +16,11 @@ const SKILL_ICON: Record<string, string> = {
 }
 
 interface ActionBarProps {
+  /** battle-hud-v2 視覺樣板整合：左側「當前行動者」小面板（樣板的 pilot-panel）。 */
+  pilotName: string
+  pilotNameEn: string
+  pilotRoleLabel: string
+  pilotPortraitUrl?: string
   skill1?: Skill
   skill2?: Skill
   passiveSkill?: Skill
@@ -44,6 +49,10 @@ interface ActionBarProps {
 }
 
 export function ActionBar({
+  pilotName,
+  pilotNameEn,
+  pilotRoleLabel,
+  pilotPortraitUrl,
   skill1,
   skill2,
   passiveSkill,
@@ -88,6 +97,19 @@ export function ActionBar({
       <span className={styles.awakenLabel} aria-hidden="true">
         AWAKEN THE STARS
       </span>
+
+      <div className={styles.pilotPanel} style={{ '--accent': accentColor } as CSSProperties}>
+        {pilotPortraitUrl ? (
+          <img className={styles.pilotPortrait} src={pilotPortraitUrl} alt="" />
+        ) : (
+          <div className={styles.pilotPortraitFallback}>{pilotName.slice(0, 1)}</div>
+        )}
+        <div className={styles.pilotInfo}>
+          <span className={styles.pilotRole}>{pilotRoleLabel}</span>
+          <span className={styles.pilotName}>{pilotName}</span>
+          <span className={styles.pilotNameEn}>{pilotNameEn}</span>
+        </div>
+      </div>
 
       <div className={styles.buttons}>
         {[skill1, skill2].map((skill, i) => {

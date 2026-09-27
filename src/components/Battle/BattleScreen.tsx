@@ -8,12 +8,15 @@
 // 直到輪到我方某單位真正需要玩家輸入（need-action）才停下來，把技能列換成那個人的
 // 真實技能/SP/冷卻，等玩家點擊後用 submitAction() 把選擇餵回去繼續跑。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { resolveKnightImage } from '../../assets/knightImages'
 import { ETERNAL_BOSS, ETERNAL_ID } from '../../data/bosses'
 import { getKnight } from '../../data/knights'
 import { FRAGMENT_STELLAR_SOVEREIGNTY, grantStellarFragment, hasStellarFragment } from '../../data/relics'
 import type { Skill } from '../../data/skills'
+import { FACTION_COLORS } from '../../data/types'
 import type { BattleResult, BattleStepEvent, Combatant, PlayerActionRequest, PlayerChoice, Side } from '../../engine/battle'
 import { ActionBar } from './ActionBar'
+import { BattleFeed, type FeedEntry } from './BattleFeed'
 import { ChronicleResultActions } from '../../pages/Chronicle/BattleResult'
 import { needsEnemyTarget, planAnimation, toBattleUnitSlot, type PlannedHit } from './battleAdapter'
 import {
@@ -172,6 +175,25 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
   // playStep() 才會接著往下跑技能名稱/暗化/傷害數字那一段，見下面 playCutIn／handleCutInEnded。
   const [cutInVideoUrl, setCutInVideoUrl] = useState<string | null>(null)
   const cutInResolveRef = useRef<(() => void) | null>(null)
+
+  // battle-hud-v2 視覺樣板整合：戰報（BattleFeed）——文字內容完全來自 engine 每一步 yield
+  // 帶出來的 BattleEvent.message（真實戰鬥紀錄），不是憑空編的展示用假資料。turnOrderUids
+  // 則是 engine 這一回合實際算出來的行動序列（見 engine/battle.ts 'turn-start' 新增的
+  // order 欄位），不是用 baseSpd 猜的近似值。
+  const [feedEntries, setFeedEntries] = useState<FeedEntry[]>([])
+  const [turnOrderUids, setTurnOrderUids] = useState<string[]>([])
+  const feedIdRef = useRef(0)
+  const capturedEventCountRef = useRef(0)
+  // 'unit-acted' 步驟本身沒有 turn 欄位（只有 turn-start／turn-end 有），這裡另外記一份
+  // 「目前是第幾回合」給戰報用——純顯示用途，跟 engine 內部真正的回合判定完全無關。
+  const currentTurnRef = useRef(1)
+
+  const pushFeed = useCallback((events: readonly { message: string }[], turn: number) => {
+    if (events.length === 0) return
+    const mapped: FeedEntry[] = events.map((e) => ({ id: ++feedIdRef.current, turn, message: e.message }))
+    setFeedEntries((prev) => [...prev, ...mapped])
+    capturedEventCountRef.current += events.length
+  }, [])
 
   const spawnHit = useCallback((planned: PlannedHit) => {
     const id = ++hitIdRef.current
@@ -351,6 +373,16 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
           await runPhaseTransition(stepSide, stepSide === 'enemy' ? stepActorUid : undefined)
         }
         if (stepSide) lastSide = stepSide
+        // 戰報／行動序列：turn-start 步驟帶著這一回合 engine 真正算出來的 order，先存起來
+        // 給 BattleFeed 顯示；每一步的 events（不管哪個 kind）都照時間順序併進戰報，文字
+        // 就是 engine 自己產生的 BattleEvent.message。
+        if (current.kind === 'turn-start') {
+          setTurnOrderUids(current.order)
+          currentTurnRef.current = current.turn
+        } else if (current.kind === 'turn-end') {
+          currentTurnRef.current = current.turn
+        }
+        pushFeed(current.events, currentTurnRef.current)
         await playStep(current)
         step = advance()
       }
@@ -363,6 +395,11 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
         setPendingRequest(step.request)
         setActiveUnitId(step.request.actorUid)
       } else {
+        // 戰報：result.events 是整場戰鬥累積下來的完整清單，最後一則「戰鬥結束：…」訊息
+        // 只會出現在這裡（不會透過任何 turn-start/unit-acted/turn-end 的 step 被 yield 出來）——
+        // 用 capturedEventCountRef 記錄已經併入戰報的筆數，這裡只補上還沒看過的尾段，
+        // 不會把前面已經顯示過的訊息重複加一次。
+        pushFeed(step.result.events.slice(capturedEventCountRef.current), step.result.turns)
         // 項目 D：戰鬥結束——先讓玩家看 0.8 秒的戰場殘局（KO 灰階／震動已經在最後一擊的
         // playStep 裡演完了），再把 revealedResult 設出去彈出結算橫幅，不要一結束就立刻跳出來。
         await sleep(800)
@@ -374,7 +411,7 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
       }
       setBusy(false)
     },
-    [advance, playStep, runPhaseTransition, isSanctuary],
+    [advance, playStep, runPhaseTransition, isSanctuary, pushFeed],
   )
 
   // pumpedRunIdRef 擋掉 StrictMode 開發模式下 effect 的 mount→cleanup→mount 雙跑，
@@ -461,6 +498,11 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     setTelegraphUnitId(null)
     setCutInVideoUrl(null)
     cutInResolveRef.current = null
+    setFeedEntries([])
+    setTurnOrderUids([])
+    feedIdRef.current = 0
+    capturedEventCountRef.current = 0
+    currentTurnRef.current = 1
   }, [])
 
   // 兩個既有的「重新開始」入口（頂部列的齒輪旁按鈕、戰鬥結束橫幅的「再戰一場」）
@@ -531,6 +573,12 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
   const activeSkills = focused ? focused.skills.filter((s) => s.id !== 'normal') : []
   const normalSkill = focused?.skills.find((s) => s.id === 'normal')
   const passiveSkill = focused?.passives[0]
+  // battle-hud-v2 視覺樣板整合：ActionBar 的「當前行動者」小面板（樣板的 pilot-panel）——
+  // 沿用同一個 focused，不是另外算一份，跟卡片上的金框「當前行動」標籤永遠指同一個人。
+  const pilotPortraitUrl = focused ? resolveKnightImage(focused.knight.image) : undefined
+  const pilotRoleLabel = focused
+    ? `${focused.row === 'back' ? '後衛' : '前衛'} / ${FACTION_COLORS[focused.knight.faction].label}`
+    : ''
 
   // 項目 B（換人代打，主人 2026-09-12 拍板）：輪到我方某人行動時，engine 的 need-action 請求
   // 會附上這回合還能代打的其他存活隊友名單（pendingRequest.swappable）——玩家點了預覽其中一位
@@ -732,6 +780,10 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
 
       <div className={styles.actionBarWrap}>
         <ActionBar
+          pilotName={focused?.knight.name ?? '—'}
+          pilotNameEn={focused?.knight.nameEn ?? ''}
+          pilotRoleLabel={pilotRoleLabel}
+          pilotPortraitUrl={pilotPortraitUrl}
           skill1={activeSkills[0]}
           skill2={activeSkills[1]}
           passiveSkill={passiveSkill}
@@ -750,6 +802,16 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
           onCastSkill={handleCastSkill}
           onNormalAttack={handleNormalAttack}
           onFuse={handleMountFuse}
+        />
+      </div>
+
+      <div className={styles.feedWrap}>
+        <BattleFeed
+          entries={feedEntries}
+          turnOrderUids={turnOrderUids}
+          combatants={displayed}
+          activeUnitId={activeUnitId}
+          getKnight={getKnight}
         />
       </div>
     </div>
