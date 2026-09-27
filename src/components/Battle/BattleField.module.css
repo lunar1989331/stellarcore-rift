@@ -1,9 +1,19 @@
 /* 對齊樣板 .battle-stage/.stage-content：暗化＋兩側漸暗濾鏡疊在背景照片上（不是背景本身），
    內容欄 padding 置中版面。一般對戰的背景圖仍是「廢墟平原.png」（BattleField.tsx 的
-   SCENE_DEFAULT_IMG 沒有改，只有這份 CSS 的濾鏡recipe對齊樣板）。 */
+   SCENE_DEFAULT_IMG 沒有改，只有這份 CSS 的濾鏡recipe對齊樣板）。
+   2026-09-27 空白帶修正：.stage（父層）的高度來自 flex:1 1 auto（見
+   BattleScreen.module.css），不是寫死的 height，這種「靠 flex-grow 撐出來」的高度對
+   normal-flow 子元素的 height:100% 是一個經典的循環依賴陷阱——瀏覽器計算 .stage 本身
+   高度時，會先用內容高度（不含 grow）估一次 .field 的 height:100%，之後 flex-grow 才把
+   .stage 撐高，但 .field 的 100% 沒有跟著重新解析，實測會卡在「內容需要的高度」（這次
+   量到 404px）而不是 .stage 最終拿到的高度（546px）——兩者之間的落差就是截圖看到的
+   那條空白帶（背景圖／卡片都停在 404px 高，.stage 剩下的 142px 只剩純色 --ink 背景）。
+   改用 position:absolute + inset:0：絕對定位元素的尺寸直接來自「最近的 position 祖先
+   （.stage）已經算完的 padding box」，不會再被自己內容的高度回頭影響，一定等於 .stage
+   實際拿到的最終高度，徹底跳過這個循環依賴。 */
 .field {
-  position: relative;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   isolation: isolate;
   overflow: hidden;
   background: var(--ink, #05060b);
