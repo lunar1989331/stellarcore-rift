@@ -77,16 +77,16 @@
   flex-direction: column;
 }
 
-/* 敵／我半場——各自拿 stageContent 扣掉 stage-middle 之後剩餘高度的一半，
-   內部前後排用 space-evenly 分配（後排在前排之外，一個永遠不會被壓縮到比卡片還矮）。 */
+/* 敵／我半場——各自拿 stageContent 扣掉 stage-middle 之後剩餘高度的一半。
+   2026-09-27 桌機空間規格書：每一側只剩一排（見 BattleField.tsx 檔頭註解，前/後排
+   改用位置＋標籤＋瞄準提示表達，不再是兩個物理排），這裡單純把這一排置中即可。 */
 .enemyArea,
 .allyArea {
   flex: 1 1 0%;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  gap: clamp(3px, 0.6vh, 8px);
+  justify-content: center;
   overflow: hidden;
 }
 

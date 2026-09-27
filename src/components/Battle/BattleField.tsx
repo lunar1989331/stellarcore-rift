@@ -8,9 +8,17 @@
 // 像樣板一樣置中、有呼吸空間。
 //
 // 前／後排是這個遊戲的真實規則（非穿透單體技只能打前排、後排全滅才補位，見
-// engine/battle.ts Q3），樣板的示範資料沒有這個機制、三張卡永遠同一排——這裡維持
-// 「調整 HUD 來容納功能」的既定原則：enemy-line/ally-line 底下仍分成 back-row／
-// front-row 兩個子排，只是卡片本身、標頭、間距全部改成樣板的樣子。
+// engine/battle.ts Q3），樣板的示範資料沒有這個機制、三張卡永遠同一排——
+// 2026-09-27 桌機空間規格書：四排（敵後/敵前/我前/我後各自一排）在 1440×900／
+// 1920×1080 的正常瀏覽器可視高度下放不下技能列與執行按鈕，逼玩家一直上下捲動。
+// 改回樣板原本的「敵我各一排、三張橫向並排」，前/後排關係改用三個線索保留（不再
+// 用兩個獨立的物理排）：
+//   1. 位置——combatants 建立順序本來就是前排在先、後排殿後（見 engine
+//      makeCombatant），同一排內後排卡片自然排在最後一格，不用額外排序。
+//   2. UnitCard 卡片本身的「前衛／後衛」標籤（見 UnitCard.tsx 的 roleLabel）。
+//   3. 瞄準模式的目標提示——只有真正合法的目標（前排，或技能可穿透時的全員）會顯示
+//      準星；不合法的後排（連同已陣亡的）會顯示暗化，見下面 Row 呼叫多加的
+//      dimAll={targeting} 那行。
 import { useEffect, useState } from 'react'
 import type { Faction, Knight } from '../../data/types'
 import type { Combatant } from '../../engine/battle'
@@ -163,12 +171,7 @@ export function BattleField({
     }
   }, [cutInState])
 
-  const enemyBack = enemyFormation.filter((s) => s.row === 'back')
-  const enemyFront = enemyFormation.filter((s) => s.row === 'front')
-  const allyFront = allyFormation.filter((s) => s.row === 'front')
-  const allyBack = allyFormation.filter((s) => s.row === 'back')
-
-  // 樣板的 .unit-index（01/02/03）用「這一側原始陣容順序」編號，不是各自 row 子陣列的順序——
+  // 樣板的 .unit-index（01/02/03）用「這一側原始陣容順序」編號——
   // enemyFormation/allyFormation 本來就保留 engine 建立 Combatant 時的順序（前排在先、
   // 後排殿後），直接照這個順序編號即可。
   const enemyIndex = new Map(enemyFormation.map((s, i) => [s.uid, i + 1]))
@@ -234,23 +237,9 @@ export function BattleField({
               }
             />
           )}
-          {!bossCombatant && enemyBack.length > 0 && (
-            <Row
-              slots={enemyBack}
-              indexOf={enemyIndex}
-              getKnight={getKnight}
-              currentUnitId={currentUnitId}
-              hits={hits}
-              castingUnitId={castingUnitId}
-              onSelect={onSelectEnemy ? (slot) => onSelectEnemy(slot.uid) : undefined}
-              targetableIds={targetableEnemyUids}
-              lockedTargetUid={lockedTargetUid}
-              telegraphUnitId={telegraphUnitId}
-            />
-          )}
           {!bossCombatant && (
             <Row
-              slots={enemyFront}
+              slots={enemyFormation}
               indexOf={enemyIndex}
               getKnight={getKnight}
               currentUnitId={currentUnitId}
@@ -259,6 +248,12 @@ export function BattleField({
               onSelect={onSelectEnemy ? (slot) => onSelectEnemy(slot.uid) : undefined}
               targetableIds={targetableEnemyUids}
               lockedTargetUid={lockedTargetUid}
+              // 項目 C：瞄準模式中，這一排裡不合法的目標（後排、或已陣亡）要暗化，
+              // 跟合法目標（前排，顯示準星）拉開視覺對比——這是拿掉物理前/後排之後，
+              // 補回「後排受保護」規則可見性的第三個線索（另外兩個是位置與 role 標籤，
+              // 見檔頭註解）。targeting 只在有合法目標存在時才是 true，非目標時
+              // dimAll=false 不影響平常顯示。
+              dimAll={targeting}
               telegraphUnitId={telegraphUnitId}
             />
           )}
@@ -275,27 +270,17 @@ export function BattleField({
 
         <div className={styles.allyArea}>
           <Row
-            slots={allyFront}
+            slots={allyFormation}
             indexOf={allyIndex}
             getKnight={getKnight}
             currentUnitId={currentUnitId}
             hits={hits}
             castingUnitId={castingUnitId}
             onSelect={onSelectAlly ? (slot) => onSelectAlly(slot.knightId) : undefined}
+            // 瞄準模式中，我方全體都不是合法目標（targetableIds 只給敵方算），
+            // 所以這裡整排都暗化，突顯玩家該去點敵方卡片，跟 Session 15 起的既有行為一致。
             dimAll={targeting}
           />
-          {allyBack.length > 0 && (
-            <Row
-              slots={allyBack}
-              indexOf={allyIndex}
-              getKnight={getKnight}
-              currentUnitId={currentUnitId}
-              hits={hits}
-              castingUnitId={castingUnitId}
-              onSelect={onSelectAlly ? (slot) => onSelectAlly(slot.knightId) : undefined}
-              dimAll={targeting}
-            />
-          )}
         </div>
 
         <FactionBanner

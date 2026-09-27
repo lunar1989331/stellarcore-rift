@@ -5,7 +5,11 @@
   position: relative;
   min-width: 0;
   width: clamp(148px, 19vw, 300px);
-  height: clamp(108px, 13.4vw, 156px);
+  /* 2026-09-27 桌機空間規格書：每側只剩一排（見 BattleField.tsx），高度預算跟著
+     BattleScreen.module.css 的新 .stage 高度一起收窄——140px 上限仍足夠放下
+     role/index、name/英文名、HP 條、SP 文字四行內容並保持清楚可讀（比 mobile
+     版的 118px 寬裕，字級也沒有調整）。 */
+  height: clamp(96px, 11vw, 140px);
   display: flex;
   align-items: stretch;
   text-align: left;
