@@ -91,7 +91,7 @@ export function useInteractiveBattle({
   enemyAtkMultiplier,
 }: InteractiveBattleOptions) {
   const genRef = useRef<BattleGenerator | null>(null)
-  if (!genRef.current)
+  if (genRef.current === null)
     genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier })
 
   const [combatants, setCombatants] = useState<Combatant[]>([])

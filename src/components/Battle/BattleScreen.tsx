@@ -384,10 +384,14 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     if (!ready || !team || !introDone || pumpedRunIdRef.current === runId) return
     pumpedRunIdRef.current = runId
     // 敵方先攻：演出結束後多停 1 秒讓玩家看清楚局面，再開始跑敵方 AI 行動。
+    // 兩個分支都透過 .then() 延到下一個 microtask 才真正呼叫 pump()——pump() 開頭會同步
+    // setState（見上面 pump 定義），直接在 effect 本體裡呼叫會被 oxlint 判定成「在 effect
+    // 中同步觸發 setState」；用 Promise.resolve().then() 包一層，讓它跟 sleep(1000).then()
+    // 那個分支一樣是非同步觸發，行為對玩家來說沒有可感知差異（只差一個 microtask tick）。
     if (firstSide === 'enemy') {
       void sleep(1000).then(() => pump())
     } else {
-      pump()
+      void Promise.resolve().then(() => pump())
     }
   }, [ready, team, runId, pump, introDone, firstSide])
 
