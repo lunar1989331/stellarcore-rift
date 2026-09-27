@@ -34,28 +34,31 @@
   flex: 0 0 auto;
 }
 
-/* 桌機空間規格書（2026-09-27）：上一輪把 .stage 加高到 720-880px 是為了容納「敵我各兩排
-   （前+後）」的四排版面，結果在 1440×900／1920×1080 的正常瀏覽器可視高度下，topbar／
-   command-deck／bottom-strip 反而被擠到可視範圍外，玩家要一直捲動才能出招——跟這次要修的
-   問題完全相反。真正的修法不是把 .stage 越調越高，而是從根本改成敵我各「一排」三張橫向
-   並排（見 BattleField.tsx 檔頭註解，前/後排改用位置＋標籤＋瞄準提示表達），把所需高度
-   壓回樣板原本的量級，讓 .stage／command-deck／bottom-strip 三者能同時塞進一般桌機視窗。 */
+/* 桌機空白留白修正（2026-09-27 第二輪）：上一輪把 .stage 從「加到 720-880px」改回
+   「clamp(360px,30vw,460px) 固定高度」，確實不再需要捲動就看得到指令區——但這個高度是
+   「四排改一排之後，卡片本身需要的最小高度」反推出來的下限，不是「桌機視窗實際可用高度」。
+   .root 是 min-height:100vh 但所有直接子元素（topBarWrap／stage／actionBarWrap／
+   feedWrap）都是 flex:0 0 auto（不會長大），總內容高度只要小於 100vh，多出來的高度就會
+   變成 .root 底部（戰報列之後）的一整塊空白——這才是截圖裡看到的空白真正來源，不是任何
+   單一元件自己多留了 padding。
+   修法：把 .stage 從「固定高度」改成「flex:1 1 auto + min-height 下限」，讓它把 .root
+   多出來的可用高度吃掉、分給戰場背景與卡片置中的呼吸空間；topBarWrap／actionBarWrap／
+   feedWrap 維持 flex:0 0 auto，高度仍然完全由內容決定，不會被拉長。 */
 .stage {
   position: relative;
-  flex: 0 0 auto;
-  isolation: isolate;
-  height: clamp(360px, 30vw, 460px);
+  flex: 1 1 auto;
   min-height: 360px;
+  isolation: isolate;
   overflow: hidden;
   background: var(--ink);
 }
 
 @media (max-width: 700px) {
   .stage {
-    height: auto;
-    /* 手機版卡片改成直式堆疊（UnitCard.module.css 的 ≤700px 規則），現在每側也只剩
-       一排——之前 560px 是給四排版面預留的底線，兩排版面用不到那麼多，降低底線讓
-       手機版不會平白多出一段空白，捲動距離也跟著變短。 */
+    /* 手機版卡片改成直式堆疊、頁面本來就會自然捲動（見 .root 的說明）——這裡故意不讓
+       .stage 用 flex-grow 撐滿 min-height:100vh，那樣反而會在內容明明用不到那麼高的
+       裝置上（例如直式平板）把指令區多推遠、增加不必要的捲動距離。維持內容驅動的高度。 */
+    flex: 0 0 auto;
     min-height: 360px;
   }
 }
