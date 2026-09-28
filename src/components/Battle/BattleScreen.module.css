@@ -70,9 +70,16 @@
   box-shadow: 0 -8px 24px #07101dbb;
 }
 
-/* 樣板 .bottom-strip。 */
+/* 樣板 .bottom-strip。桌面版（battle-hud-compact-desktop）拿掉行動序列＋戰報列，
+   高度讓給戰場；手機版保留（樣板手機版本來就只顯示戰報摘要）。 */
 .feedWrap {
   flex: 0 0 auto;
+}
+
+@media (min-width: 701px) {
+  .feedWrap {
+    display: none;
+  }
 }
 
 .resultBanner {

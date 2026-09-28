@@ -9,7 +9,7 @@
 }
 
 .deck > div {
-  padding: clamp(10px, 1.8vh, 21px) clamp(12px, 1.6vw, 25px);
+  padding: clamp(6px, 1.1vh, 12px) clamp(12px, 1.4vw, 22px);
   min-width: 0;
 }
 
@@ -59,13 +59,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: clamp(8px, 1.4vh, 16px) 0;
+  margin: clamp(5px, 0.8vh, 9px) 0;
 }
 
 .pilotPortrait,
 .pilotPortraitFallback {
-  width: clamp(44px, 5.4vw, 64px);
-  height: clamp(50px, 6vw, 72px);
+  width: clamp(40px, 3.6vw, 52px);
+  height: clamp(44px, 4vw, 58px);
   object-fit: cover;
   border: 1px solid #a5a5bacc;
   clip-path: polygon(0 0, 86% 0, 100% 14%, 100% 100%, 0 100%);
@@ -103,19 +103,19 @@
 }
 
 .pilotNote {
-  font-size: 12px;
+  font-size: 11px;
   color: #b9c8d7;
   border-top: 1px solid #596e8155;
-  padding-top: 10px;
-  line-height: 1.5;
+  padding-top: 6px;
+  line-height: 1.4;
 }
 
 /* === skills-panel === */
 .skillList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .slotEmpty {
@@ -129,8 +129,8 @@
   align-items: center;
   text-align: left;
   min-width: 0;
-  min-height: 58px;
-  padding: 8px 10px;
+  min-height: 42px;
+  padding: 5px 9px;
   border: 1px solid #6a829a88;
   border-radius: 4px;
   background: #102034;
@@ -157,14 +157,14 @@
 }
 
 .iconCircle {
-  width: clamp(28px, 3.2vw, 36px);
-  height: clamp(28px, 3.2vw, 36px);
+  width: clamp(24px, 2.4vw, 30px);
+  height: clamp(24px, 2.4vw, 30px);
   border: 1px solid #c4a779;
   border-radius: 50%;
   display: grid;
   place-items: center;
   color: var(--gold-bright, #ffdea2);
-  font-size: clamp(14px, 1.6vw, 20px);
+  font-size: clamp(13px, 1.3vw, 17px);
   flex: none;
 }
 
@@ -219,8 +219,7 @@
 
 /* === action-panel === */
 .selectedAction {
-  min-height: 70px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .selectedAction small {
@@ -232,7 +231,7 @@
 .selectedAction strong {
   display: block;
   font: 700 clamp(15px, 1.7vw, 19px) Georgia, 'Noto Serif TC', serif;
-  margin: 3px 0;
+  margin: 1px 0;
   color: var(--gold-bright, #ffdea2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -246,7 +245,8 @@
 
 .execute {
   width: 100%;
-  padding: 10px 14px;
+  margin-top: 6px;
+  padding: 7px 14px;
   border: 1px solid #d8ba80;
   border-radius: 3px;
   background: linear-gradient(105deg, #7b6745, #c6a872);
@@ -269,7 +269,7 @@
 }
 
 .spMeter {
-  margin-top: 14px;
+  margin-top: 8px;
 }
 
 .spHeading {
@@ -305,6 +305,18 @@
 .spCells i.filled {
   background: linear-gradient(90deg, #a48553, #f4d99d);
   border-color: #dfbd79;
+}
+
+/* 桌面版（battle-hud-compact-desktop）：技能改 3 欄——技能①②・普攻一排、被動・坐騎一排，
+   指令區從 3 排按鈕縮成 2 排，整體高度約為原本的三分之二。 */
+@media (min-width: 1051px) {
+  .skillList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mountBtn {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 1050px) {

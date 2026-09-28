@@ -141,7 +141,13 @@ export function UnitCard({
         <div className={styles.info}>
           <div className={styles.top}>
             <span className={styles.role}>{roleLabel}</span>
-            <span className={styles.index}>{String(index).padStart(2, '0')}</span>
+            {/* 「當前行動」標籤放在資訊欄頂列（取代序號位置）：卡片有 clip-path 斜切角，
+                舊版掛在卡片下緣外側（bottom:-9px）會被裁掉一半。 */}
+            {isCurrent ? (
+              <span className={styles.currentTag}>當前行動</span>
+            ) : (
+              <span className={styles.index}>{String(index).padStart(2, '0')}</span>
+            )}
           </div>
           <div>
             <strong className={styles.name}>{knight.name}</strong>
@@ -184,7 +190,6 @@ export function UnitCard({
         </div>
       )}
 
-      {isCurrent && <div className={styles.currentTag}>當前行動</div>}
       {(isCurrent || isCasting) && <div className={styles.castingGlow} aria-hidden="true" />}
 
       <div className={styles.floatingLayer}>
