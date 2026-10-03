@@ -202,6 +202,7 @@ export function BattleField({
           muted
           playsInline
           onEnded={onCutInEnded}
+          onError={onCutInEnded}
           style={{ opacity: cutInState.phase === 'visible' ? 1 : 0 }}
           aria-hidden="true"
         />

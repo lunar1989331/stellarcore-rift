@@ -36,6 +36,7 @@ import { CommandDeck, MOUNT_FUSE_ID } from './CommandDeck'
 import type { FloatingHit } from './FloatingNumber'
 import { spawnHitParticles } from './hitParticles'
 import { getSkillCutInVideo } from './skillCutInVideos'
+import { getMountFusionVideo } from '../../data/mountFusionVideos'
 import { SkillEffectOverlay } from './SkillEffectOverlay'
 import { SanctuaryFxOverlay, type SanctuaryFx } from './SanctuaryFxOverlay'
 import { TeamSelect } from './TeamSelect'
@@ -217,14 +218,26 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
    * 完全不受影響，只有背景層在切換。沒有對應影片（getSkillCutInVideo 回傳 null）時立刻
    * resolve，維持原本畫面不變，等同 Phase C 舊版 stub 的行為。
    */
-  const playCutIn = useCallback((knightId: string, skillIndex: 1 | 2): Promise<void> => {
-    const videoUrl = getSkillCutInVideo(knightId, skillIndex)
+  const playVideoUrl = useCallback((videoUrl: string | null): Promise<void> => {
     if (!videoUrl) return Promise.resolve()
     return new Promise<void>((resolve) => {
       cutInResolveRef.current = resolve
       setCutInVideoUrl(videoUrl)
     })
   }, [])
+
+  const playCutIn = useCallback(
+    (knightId: string, skillIndex: 1 | 2): Promise<void> => playVideoUrl(getSkillCutInVideo(knightId, skillIndex)),
+    [playVideoUrl],
+  )
+
+  /** 坐騎合體登場動畫：另寫一支薄包裝而不是塞進 playCutIn（那支的參數是騎士 id＋技能位置，
+   * 語意對不上），但底層共用同一個影片圖層與 resolve 機制——同一時間只會有一支影片在播，
+   * 不可能跟技能 cut-in 疊在一起；沒有影片的坐騎立刻 resolve，走原本合體流程。 */
+  const playMountFusion = useCallback(
+    (mountId: string): Promise<void> => playVideoUrl(getMountFusionVideo(mountId)),
+    [playVideoUrl],
+  )
 
   /** <video onEnded>：影片自然播完（沒設 loop，只會觸發一次）。先把 state 清成 null 讓
    * BattleField 的 AnimatePresence 開始 0.3s 淡出，等這段淡出真正跑完（跟它的 CSS
@@ -277,6 +290,10 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
         const activeIdx = cutInActor?.skills.filter((s) => s.id !== 'normal').findIndex((s) => s.id === plan.skillId)
         if (cutInActor?.side === 'ally' && (activeIdx === 0 || activeIdx === 1)) {
           await playCutIn(cutInActor.knight.id, (activeIdx + 1) as 1 | 2)
+        } else if (cutInActor?.side === 'ally' && plan.skillId === 'mount-fuse' && cutInActor.mount) {
+          // 坐騎合體登場動畫：播完才往下跑技能名稱／傷害數字，HP 與狀態顯示本來就要等
+          // 這個函式尾端的 setDisplayed 才更新，所以合體效果一定是動畫結束後才呈現。
+          await playMountFusion(cutInActor.mount.id)
         }
         if (!videoOnly) setShowDarken(true)
         // 問題⑤：虛空裂切施放期間戰場背景切成技能版，技能演出結束（setShowDarken(false)）
@@ -318,7 +335,7 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
       setActiveUnitId(null)
       await playSanctuaryFx(step.events)
     },
-    [spawnHit, playCutIn, playSanctuaryFx],
+    [spawnHit, playCutIn, playMountFusion, playSanctuaryFx],
   )
 
   // 攻守回合切換節奏強化規格書（2026-09-19）：把【1】靜止緩衝、【2】TurnPhaseBanner 過場、
