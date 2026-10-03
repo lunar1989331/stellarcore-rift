@@ -12,6 +12,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { resolveKnightImage } from '../../assets/knightImages'
+import { getMountedPortrait } from '../../data/mountedPortraits'
 import { getFusedMount } from '../../data/mounts'
 import { FACTION_COLORS, type Knight } from '../../data/types'
 import type { BattleUnitSlot } from './battleDemoData'
@@ -57,6 +58,10 @@ export function UnitCard({
   const portraitUrl = resolveKnightImage(knight.image)
   const mount = slot.isMounted ? getFusedMount(knight.mount) : undefined
   const mountPortraitUrl = mount?.image ? resolveKnightImage(mount.image) : undefined
+  // 騎乘版立繪：有登錄的騎士合體後淡入換圖（疊在原圖上，opacity 切換；圖片常駐渲染所以戰鬥一開始
+  // 就預載）。已有騎乘版的騎士不再疊舊的坐騎疊影，免得兩層坐騎圖互相干擾。
+  const mountedPortrait = getMountedPortrait(knight.id)
+  const showMountedArt = !!mountedPortrait && slot.isMounted
 
   const cssVars = { '--accent': accent } as CSSProperties
 
@@ -113,7 +118,7 @@ export function UnitCard({
         )}
 
         <div className={styles.artWrap}>
-          {slot.isMounted && mountPortraitUrl && (
+          {slot.isMounted && mountPortraitUrl && !mountedPortrait && (
             <img className={styles.mountGhost} src={mountPortraitUrl} alt="" aria-hidden="true" />
           )}
           {portraitUrl ? (
@@ -121,6 +126,20 @@ export function UnitCard({
           ) : (
             <div className={styles.artFallback}>{knight.name.slice(0, 1)}</div>
           )}
+          {mountedPortrait && (
+            <img
+              className={`${styles.artMounted} ${showMountedArt ? styles.artMountedOn : ''}`}
+              src={mountedPortrait.src}
+              alt=""
+              aria-hidden="true"
+              style={{
+                objectPosition: mountedPortrait.objectPosition,
+                transformOrigin: mountedPortrait.objectPosition,
+                transform: mountedPortrait.scale ? `scale(${mountedPortrait.scale})` : undefined,
+              }}
+            />
+          )}
+          {showMountedArt && <span className={styles.fusionFlash} aria-hidden="true" />}
           {/* 狀態效果圖示：樣板沒有這個系統，維持功能但收在立繪角落，不佔用資訊欄版面。 */}
           {slot.statuses.length > 0 && (
             <div className={styles.statusRow}>
