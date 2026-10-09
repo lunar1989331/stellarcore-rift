@@ -46,6 +46,8 @@ export interface BattleNode {
   enemyIds: readonly string[]
   /** 精英戰規則——Phase 1-B 接進引擎（見 ChronicleTeamSelect.tsx 的 eliteAtkMultiplier）。 */
   eliteRule?: EliteRule
+  /** 教學戰弱化（序-1／序-2 專用）：敵方 maxHp／atk 乘數。其他關卡不設。 */
+  enemyScale?: { hp: number; atk: number }
 }
 
 export interface Domain {
@@ -71,6 +73,13 @@ export interface Domain {
 
 export const PROLOGUE_DOMAIN_ID = 'prologue-bridge'
 
+/**
+ * 序章教學戰敵方弱化倍率（裂隙遊魂＝源核回聲，數值低於本尊）。
+ * 以 5 種代表隊伍各 100 場固定 RNG 模擬校準後定案（結果見 CLAUDE.md Session 36）。
+ */
+export const TUTORIAL_1_SCALE = { hp: 0.75, atk: 0.75 }
+export const TUTORIAL_2_SCALE = { hp: 0.4, atk: 0.3 }
+
 export const DOMAINS: Domain[] = [
   // ═══════════════════════════ 序章（共用） ═══════════════════════════
   {
@@ -85,8 +94,8 @@ export const DOMAINS: Domain[] = [
     prologueDialogue: DOMAIN_DIALOGUES['neutral-bridge'].prologue,
     epilogueDialogue: DOMAIN_DIALOGUES['neutral-bridge'].epilogue,
     battles: [
-      { id: 'tutorial-1', type: 'tutorial', label: '序-1 初試身手', enemyIds: ['eclron', 'holka', 'seres'] },
-      { id: 'tutorial-2', type: 'tutorial', label: '序-2 裂隙遊魂', enemyIds: ['mordres', 'gratos', 'viel'] },
+      { id: 'tutorial-1', type: 'tutorial', label: '序-1 初試身手', enemyIds: ['eclron', 'holka', 'seres'], enemyScale: TUTORIAL_1_SCALE },
+      { id: 'tutorial-2', type: 'tutorial', label: '序-2 裂隙遊魂', enemyIds: ['mordres', 'gratos', 'viel'], enemyScale: TUTORIAL_2_SCALE },
     ],
   },
 

@@ -5,6 +5,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { BossConfig } from '../../data/bosses'
 import { getKnight } from '../../data/knights'
+import type { Knight } from '../../data/types'
 import {
   runBattleSteps,
   type Side,
@@ -26,6 +27,8 @@ export interface InteractiveBattleOptions {
    * 在這裡（不是 engine/battle.ts）套用——直接調整餵給引擎的 Knight 副本的 atk 欄位，
    * 不動 BattleConfig／makeCombatant，引擎完全不用知道「精英戰」這個 Chronicle Mode 專屬概念。 */
   enemyAtkMultiplier?: number
+  /** Chronicle Mode 序章教學戰（enemyScale）：敵方 maxHp 乘數；maxHp 與起始 HP 一起縮放。 */
+  enemyHpMultiplier?: number
 }
 
 /** 每場戰鬥開始時才確定的額外引擎設定（restartWith 用，不依賴 hook 的 closure 值）。 */
@@ -33,6 +36,7 @@ export interface BattleExtras {
   boss?: BossConfig
   fragmentEquipped?: boolean
   enemyAtkMultiplier?: number
+  enemyHpMultiplier?: number
 }
 
 /**
@@ -54,6 +58,15 @@ export function cloneCombatant(c: Combatant): Combatant {
 
 type BattleGenerator = Generator<BattleStepEvent, BattleResult, PlayerChoice | void>
 
+/** 複製敵方 Knight 並縮放 atk／maxHp（不改共用物件）；模擬校準腳本與實戰共用同一個函式。 */
+export function scaleEnemies(enemies: readonly Knight[], atkMul?: number, hpMul?: number): Knight[] {
+  return enemies.map((k) => ({
+    ...k,
+    atk: atkMul && atkMul !== 1 ? Math.round(k.atk * atkMul) : k.atk,
+    maxHp: hpMul && hpMul !== 1 ? Math.round(k.maxHp * hpMul) : k.maxHp,
+  }))
+}
+
 // 呼叫 generator function 本身不會執行內容（要等第一次 .next()），所以在 render 期間
 // 直接建立是安全的（沒有真正的副作用），不需要包一層 useEffect 才能「初始化」。
 function createGenerator(
@@ -67,10 +80,7 @@ function createGenerator(
   let enemies = enemyIds.map(getKnight).filter((k) => !!k)
   // 精英戰 enemy-buffed：複製一份修改過 atk 的 Knight，不能直接改 getKnight() 拿到的物件——
   // 那是 KNIGHTS_BY_ID 共用的參照，直接改會連圖鑑頁、其他戰鬥模式的數值一起變。
-  if (extras.enemyAtkMultiplier && extras.enemyAtkMultiplier !== 1) {
-    const multiplier = extras.enemyAtkMultiplier
-    enemies = enemies.map((k) => ({ ...k, atk: Math.round(k.atk * multiplier) }))
-  }
+  enemies = scaleEnemies(enemies, extras.enemyAtkMultiplier, extras.enemyHpMultiplier)
   return runBattleSteps({
     allies,
     enemies,
@@ -89,10 +99,11 @@ export function useInteractiveBattle({
   boss,
   fragmentEquipped,
   enemyAtkMultiplier,
+  enemyHpMultiplier,
 }: InteractiveBattleOptions) {
   const genRef = useRef<BattleGenerator | null>(null)
   if (genRef.current === null)
-    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier })
+    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier, enemyHpMultiplier })
 
   const [combatants, setCombatants] = useState<Combatant[]>([])
   const [turn, setTurn] = useState(0)
@@ -101,11 +112,11 @@ export function useInteractiveBattle({
   // 注意：allyIds/enemyIds/rng 必須是穩定參照（模組層常數，不要在呼叫端每次 render
   // 產生新陣列字面量），否則這裡會被誤判成需要重建。
   const restart = useCallback(() => {
-    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier })
+    genRef.current = createGenerator(allyIds, enemyIds, rng, undefined, { boss, fragmentEquipped, enemyAtkMultiplier, enemyHpMultiplier })
     setResult(null)
     setTurn(0)
     setCombatants([])
-  }, [allyIds, enemyIds, rng, boss, fragmentEquipped, enemyAtkMultiplier])
+  }, [allyIds, enemyIds, rng, boss, fragmentEquipped, enemyAtkMultiplier, enemyHpMultiplier])
 
   /**
    * 隊伍選擇畫面（問題②）用：直接帶新的 allyIds 重建 generator，不依賴 hook 參數 allyIds
@@ -120,13 +131,13 @@ export function useInteractiveBattle({
         newEnemyIds ?? enemyIds,
         rng,
         firstSide,
-        extras ?? { boss, fragmentEquipped, enemyAtkMultiplier },
+        extras ?? { boss, fragmentEquipped, enemyAtkMultiplier, enemyHpMultiplier },
       )
       setResult(null)
       setTurn(0)
       setCombatants([])
     },
-    [enemyIds, rng, boss, fragmentEquipped, enemyAtkMultiplier],
+    [enemyIds, rng, boss, fragmentEquipped, enemyAtkMultiplier, enemyHpMultiplier],
   )
 
   /** 跑 generator 一步；回傳這一步 yield 的內容，或（done）回傳最終 BattleResult。 */

@@ -20,6 +20,8 @@ export interface BattleUnitSlot {
   row: 'front' | 'back'
   /** 目前 HP 百分比（0–1） */
   hpPct: number
+  /** 引擎實際的 maxHp（含教學戰 enemyScale 縮放）；省略時 UnitCard 退回 knight.maxHp。 */
+  maxHp?: number
   /** 卡片上「★ 星核力：X」欄位，借來即時顯示目前 SP（見 battleAdapter.ts） */
   starCoreLevel: number
   /** SP 上限（engine Combatant.spCap，第三道路陣成立時會 +2）——橫式卡片的星核力改用圓點

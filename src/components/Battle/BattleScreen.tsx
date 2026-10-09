@@ -84,6 +84,8 @@ export interface ChronicleBattleConfig {
   /** Phase 1-B 精英戰規則（HANDOFF_PHASE1B §3）：敵方攻擊力乘數，例如 1.25＝+25%；
    * 一般戰／域主戰不帶這個欄位。實際套用在 useInteractiveBattle.ts，engine 本身不需要知道。 */
   eliteAtkMultiplier?: number
+  /** 序章教學戰（BattleNode.enemyScale）：敵方 maxHp 乘數。atk 乘數沿用 eliteAtkMultiplier 欄位（兩者不會同時出現）。 */
+  enemyHpMultiplier?: number
   onVictory: () => void
   onDefeat: () => void
 }
@@ -129,6 +131,7 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
     boss: isSanctuary ? ETERNAL_BOSS : undefined,
     fragmentEquipped: hasStellarFragment(),
     enemyAtkMultiplier: isChronicle ? chronicle!.eliteAtkMultiplier : undefined,
+    enemyHpMultiplier: isChronicle ? chronicle!.enemyHpMultiplier : undefined,
   })
   // 永恆的聖域專用狀態：全螢幕演出（破盾／合體／碎片復活）與通關獎勵。
   const [sanctuaryFx, setSanctuaryFx] = useState<SanctuaryFx | null>(null)
@@ -555,6 +558,7 @@ export function BattleScreen({ mode = 'normal', chronicle }: { mode?: BattleMode
         boss: isSanctuary ? ETERNAL_BOSS : undefined,
         fragmentEquipped: hasStellarFragment(),
         enemyAtkMultiplier: isChronicle ? chronicle!.eliteAtkMultiplier : undefined,
+        enemyHpMultiplier: isChronicle ? chronicle!.enemyHpMultiplier : undefined,
       })
       setTeam(ids)
       setTeamPickOrder(pickOrderIds)

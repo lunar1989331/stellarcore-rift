@@ -77,6 +77,7 @@ export function toBattleUnitSlot(c: Combatant): BattleUnitSlot {
     alive: c.alive,
     row: c.row,
     hpPct: c.alive ? Math.max(0, c.hp / c.maxHp) : 0,
+    maxHp: c.maxHp,
     starCoreLevel: c.sp,
     spCap: c.spCap,
     statuses: statusIcons(c),

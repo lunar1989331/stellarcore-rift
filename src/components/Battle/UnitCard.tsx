@@ -78,7 +78,8 @@ export function UnitCard({
     }
   }, [slot.alive])
 
-  const currentHp = Math.round(slot.hpPct * knight.maxHp)
+  const maxHp = slot.maxHp ?? knight.maxHp
+  const currentHp = Math.round(slot.hpPct * maxHp)
   // 樣板角色欄（.unit-role）：我方顯示「前衛/後衛 · 陣營」，敵方只顯示前衛/後衛——
   // 敵方的陣營已經由 FactionBanner（team-heading）統一標示在整排卡片上方，這裡不重複。
   const rowLabel = slot.row === 'back' ? '後衛' : '前衛'
@@ -103,7 +104,7 @@ export function UnitCard({
       transition={{ type: 'spring', stiffness: 260, damping: 22 }}
       onClick={slot.alive ? onSelect : undefined}
       role={onSelect && slot.alive ? 'button' : undefined}
-      title={`${knight.name} · HP ${currentHp} / ${knight.maxHp}`}
+      title={`${knight.name} · HP ${currentHp} / ${maxHp}`}
       // 項目 H：命中粒子特效用這個屬性定位目標卡片。
       data-combatant-uid={slot.uid}
     >
@@ -177,7 +178,7 @@ export function UnitCard({
               <div className={styles.gaugeHead}>
                 <span>HP</span>
                 <b>
-                  {currentHp.toLocaleString()} / {knight.maxHp.toLocaleString()}
+                  {currentHp.toLocaleString()} / {maxHp.toLocaleString()}
                 </b>
               </div>
               <div className={styles.track}>

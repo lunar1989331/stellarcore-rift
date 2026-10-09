@@ -91,7 +91,8 @@ export function ChronicleTeamSelect() {
         playerFaction: save.playerFaction,
         enemyIds: [...battle.enemyIds],
         sceneBase: domain.sceneBase,
-        eliteAtkMultiplier: battle.eliteRule?.type === 'enemy-buffed' ? ELITE_ATK_MULTIPLIER : undefined,
+        eliteAtkMultiplier: battle.eliteRule?.type === 'enemy-buffed' ? ELITE_ATK_MULTIPLIER : battle.enemyScale?.atk,
+        enemyHpMultiplier: battle.enemyScale?.hp,
         onVictory: handleVictory,
         onDefeat: handleDefeat,
       }}
