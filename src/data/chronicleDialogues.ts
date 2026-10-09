@@ -33,12 +33,27 @@ export const prologueDialogues: DialogueLine[] = [
   {
     speaker: '旁白',
     speakerColor: '#FFFFFF',
-    text: '遠古時代，源核——維繫星橋諸域的原始力量——於一場無名之戰中碎裂。',
+    text: '遠古時代，星橋貫穿諸域。源核——維繫萬物共鳴的原始力量——靜靜流轉於其間。',
   },
   {
     speaker: '旁白',
     speakerColor: '#FFFFFF',
-    text: '碎片散落各域，兩大勢力為之而戰：守護騎士，誓守光明；渾沌騎士，以混亂重生。',
+    text: '直到一場無人記得起因的戰爭，讓源核碎裂為無數碎片，散落諸域。',
+  },
+  {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '守護騎士承精靈之血，誓以共鳴守住殘存的光。渾沌騎士承邪靈之力，欲以吞噬讓源核重歸完整。',
+  },
+  {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '兩百年。碎片的光日漸黯淡，戰火卻從未熄滅。',
+  },
+  {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '而在廢墟平原——星橋最荒涼的一端——有什麼東西，被星橋輕輕放了下來。',
   },
   {
     speaker: '銀翼·虛空',
@@ -52,12 +67,19 @@ export const prologueDialogues: DialogueLine[] = [
     speakerColor: '#C0C0C0',
     portrait: 'argentwing-null',
     portraitSide: 'left',
-    text: '只記得……星光。還有什麼東西，在胸口跳動著。',
+    text: '沒有來處，沒有記憶。只記得星光，還有胸口深處，一個陌生的頻率正在跳動。',
+  },
+  {
+    speaker: '銀翼·虛空',
+    speakerColor: '#C0C0C0',
+    portrait: 'argentwing-null',
+    portraitSide: 'left',
+    text: '唯一能確定的，是這副機甲上刻著的名字——銀翼·虛空。',
   },
   {
     speaker: '旁白',
     speakerColor: '#FFFFFF',
-    text: '在廢墟平原的盡頭，星橋閃爍。兩個方向，兩種命運。選擇，由你決定。',
+    text: '星橋在遠方閃爍，兩面旗幟在風中搖曳。兩個方向，兩種命運。選擇，由你決定。',
   },
 ];
 
@@ -73,24 +95,58 @@ export const neutralBridgePrologue: DialogueLine[] = [
   {
     speaker: '旁白',
     speakerColor: '#FFFFFF',
-    text: '中立星橋——兩大陣營都不願踏入的緩衝地帶。也是所有流浪者的起點。',
+    text: '中立星橋——兩大陣營都不願駐守的緩衝地帶，也是所有流浪者的起點。',
+  },
+  {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '但今夜，橋面的星光在顫動。有什麼東西，正沿著裂縫爬上來。',
   },
   {
     speaker: '銀翼·虛空',
     speakerColor: '#C0C0C0',
     portrait: 'argentwing-null',
     portraitSide: 'left',
-    text: '星橋……這條路通向何方？不管了。先活下去再說。',
+    text: '（握緊星光雙翼刃）……有東西來了。不是人。',
+  },
+  {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '裂隙遊魂——源核碎裂時殘留的回聲。它們會模仿自己曾見過的騎士，卻只剩下戰鬥的本能。',
+  },
+  {
+    speaker: '銀翼·虛空',
+    speakerColor: '#C0C0C0',
+    portrait: 'argentwing-null',
+    portraitSide: 'left',
+    text: '管你是什麼。先活下去，其他的以後再想。',
   },
 ];
 
 export const neutralBridgeEpilogue: DialogueLine[] = [
   {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '遊魂碎散，化作點點星塵，無聲地沒入銀翼的胸口。',
+  },
+  {
     speaker: '銀翼·虛空',
     speakerColor: '#C0C0C0',
     portrait: 'argentwing-null',
     portraitSide: 'left',
-    text: '（凝視遠方的守護陣營旗幟）……那邊。先去看看。',
+    text: '……它們消失的時候，胸口的跳動變強了。為什麼？',
+  },
+  {
+    speaker: '銀翼·虛空',
+    speakerColor: '#C0C0C0',
+    portrait: 'argentwing-null',
+    portraitSide: 'left',
+    text: '這個頻率，一定和這個世界的裂痕有關。我必須弄清楚。',
+  },
+  {
+    speaker: '旁白',
+    speakerColor: '#FFFFFF',
+    text: '星橋的盡頭，旗幟獵獵作響。不知來歷的騎士，第一次握住了屬於自己的方向。',
   },
 ];
 
