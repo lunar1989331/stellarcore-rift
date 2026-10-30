@@ -71,7 +71,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '融合型·源核碎片',
     coreAttr: 'fusion',
-    image: '聖冠.png',
+    image: '奧瑟里斯·星裁.png',
     maxHp: 8000, // def 80 × 100（Mina Q8 原文範例）
     atk: 88,
     def: 80,
@@ -156,7 +156,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '海洋共鳴型',
     coreAttr: 'ocean', // Q2：中性
-    image: '深海遺城的三叉戟守護者.png',
+    image: '納特魯斯·深潮.png',
     maxHp: 9200, // def 92 × 100
     atk: 70,
     def: 92,
@@ -190,7 +190,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '大地共鳴型',
     coreAttr: 'earth', // Q2：中性
-    image: '熔金裂隙中的巨型戰鎧守護者.png',
+    image: '葛倫·熔盾.png',
     maxHp: 9900, // def 99 × 100（Mina Q8 原文範例：全場最高）
     atk: 78,
     def: 99,
@@ -311,7 +311,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '虛空吞噬型',
     coreAttr: 'void',
-    image: '紫焰蝕月下的黑騎躍襲.png', // ASSET_MAP v1.1 校正（原為 Eclipse Knight Amid Gothic Ruins.png；正確檔案實際存放於「坐騎篇」資料夾，已複製進 assets）
+    image: '維艾爾·暗蝕.png',
     maxHp: 5000, // def 50 × 100（Mina Q8 原文範例：全場最低）
     atk: 84,
     def: 50,

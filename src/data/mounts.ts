@@ -433,7 +433,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'abyss',
     rarity: 5,
     stats: { atk: 80, def: 60, spd: 90, starcore: 82 },
-    image: '紫焰蝕月下的黑騎躍襲.png',
+    image: '冥翼.png',
     fusionResonance: { name: '冥月蝕界', effect: '冥界侵蝕域效果提升至-15%，月蝕詛咒持續回合+2' },
     hasFullData: true,
     fusion: {
@@ -480,7 +480,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'void',
     rarity: 5,
     stats: { atk: 85, def: 48, spd: 96, starcore: 78 },
-    image: '紫月下的虛空騎士.png',
+    image: '暗蝕.png',
     fusionResonance: { name: '虛空暗蝕', effect: '虛空連斬段數增加至7連擊，虛空餘響觸發層數降低至2層' },
     hasFullData: true,
     fusion: {
