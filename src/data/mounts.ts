@@ -93,7 +93,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'earth',
     rarity: 4,
     stats: { atk: 88, def: 70, spd: 78, starcore: 60 },
-    image: '狂戰士騎士_戰爭巨豬人體藝術設計.png',
+    image: '血牙.png',
     motto: 'Rage Bears You Further · Nothing Stands',
     hasFullData: true,
     fusion: {
@@ -110,7 +110,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'frost',
     rarity: 4,
     stats: { atk: 85, def: 65, spd: 90, starcore: 62 },
-    image: '霜狼騎士_冰封戰鎧概念圖.png',
+    image: '凜牙.png',
     motto: 'Cold Drives Us Further · Winter Obeys',
     hasFullData: true,
     fusion: {
@@ -132,7 +132,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'holy',
     rarity: 4,
     stats: { atk: 82, def: 75, spd: 80, starcore: 72 },
-    image: '太陽獅子_聖騎士的沙漠坐騎.png',
+    image: '輝鬣.png',
     hasFullData: true,
     fusion: {
       hpRatio: MOUNT_HP_RATIO,
@@ -152,7 +152,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'wind',
     rarity: 5,
     stats: { atk: 75, def: 58, spd: 99, starcore: 65 },
-    image: '翡翠風暴鹿鷲概念設計海報.png',
+    image: '嵐翼.png',
     hasFullData: true,
     fusion: {
       hpRatio: MOUNT_HP_RATIO,
@@ -173,7 +173,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'lava',
     rarity: 5,
     stats: { atk: 92, def: 60, spd: 86, starcore: 68 },
-    image: '餘燼熔爐_焰騎與灰燼巨龍.png',
+    image: '燼炎.png',
     hasFullData: true,
     fusion: {
       hpRatio: MOUNT_HP_RATIO,
@@ -195,7 +195,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'holy',
     rarity: 4,
     stats: { atk: 78, def: 55, spd: 94, starcore: 70 },
-    image: '月弦星鹿_月弓騎士坐騎概念誌.png',
+    image: '蝕影.png',
     hasFullData: true,
     fusion: {
       hpRatio: MOUNT_HP_RATIO,
@@ -216,7 +216,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'abyss',
     rarity: 5,
     stats: { atk: 90, def: 65, spd: 88, starcore: 75 },
-    image: '深淵曼提柯_惡魔騎士之怒.png',
+    image: '血怒.png',
     hasFullData: true,
     fusion: {
       hpRatio: MOUNT_HP_RATIO,
@@ -237,7 +237,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'fusion',
     rarity: 5,
     stats: { atk: 80, def: 62, spd: 95, starcore: 88 },
-    image: '白銀騎士與虛空獅鷲.png',
+    image: '裂翼.png',
     hasFullData: true,
     fusion: {
       hpRatio: MOUNT_HP_RATIO,
@@ -266,7 +266,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'fusion',
     rarity: 5,
     stats: { atk: 85, def: 90, spd: 65, starcore: 88 },
-    image: '星環聖殿的天界騎士.png',
+    image: '聖冠.png',
     fusionResonance: { name: '星冠王臨', effect: '星裁天降必定命中+傷害×1.3，全體友方獲得15%HP護盾' },
     hasFullData: true,
     fusion: {
@@ -292,7 +292,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'holy',
     rarity: 5,
     stats: { atk: 60, def: 75, spd: 72, starcore: 85 },
-    image: '熾天使光環機械聖鹿設定集.png',
+    image: '聖環.png',
     fusionResonance: { name: '聖環天癒', effect: '聖裁光柱同時對全體友方回血12%，治癒量+30%' },
     hasFullData: true,
     fusion: {
@@ -317,7 +317,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'ocean',
     rarity: 5,
     stats: { atk: 65, def: 95, spd: 55, starcore: 70 },
-    image: '深海潮汐巨獸概念圖.png',
+    image: '潮淵.png',
     fusionResonance: { name: '深淵潮壁', effect: '遺城潮壁效果提升至全體承傷-55%，並對攻擊者反彈15%傷害' },
     hasFullData: true,
     fusion: {
@@ -342,7 +342,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'earth',
     rarity: 5,
     stats: { atk: 70, def: 99, spd: 30, starcore: 58 },
-    image: '熔鑄堡壘_戰爭巨蠻牛.png',
+    image: '鐵壁.png',
     fusionResonance: { name: '熔岩要塞', effect: '熔金壁壘防禦效果提升至250%+反傷提升至45%，震暈機率+20%' },
     hasFullData: true,
     fusion: {
@@ -372,7 +372,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'wind',
     rarity: 5,
     stats: { atk: 60, def: 92, spd: 68, starcore: 75 },
-    image: '星核裂紀_天穹星駒設計圖.png',
+    image: '星翼.png',
     fusionResonance: { name: '蒼穹永盾', effect: '蒼壁絕對防禦期間反傷提升至35%，暴風衝撞追加全體友方防禦+20%' },
     hasFullData: true,
     fusion: {
@@ -400,7 +400,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'void',
     rarity: 5,
     stats: { atk: 95, def: 85, spd: 72, starcore: 95 },
-    image: '星環末日的蒼穹龍騎王.png',
+    image: '終焰龍.png',
     fusionResonance: { name: '星滅龍煌', effect: '星滅斬光柱數量增加至九道，星核侵蝕持續回合+2，王座永恆復活HP提升至65%' },
     hasFullData: true,
     fusion: {
@@ -457,7 +457,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'earth',
     rarity: 5,
     stats: { atk: 75, def: 90, spd: 58, starcore: 72 },
-    image: '黑曜堡壘戰馬概念設計圖.png',
+    image: '鐵誓.png',
     fusionResonance: { name: '征服者鐵騎', effect: '重力壓制斬傷害×1.3，征服者的秩序效果期間+1回合' },
     hasFullData: true,
     fusion: {
@@ -503,7 +503,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'void',
     rarity: 5,
     stats: { atk: 90, def: 45, spd: 85, starcore: 80 },
-    image: '混沌紅焰之翼_機械龍騎概念圖.png',
+    image: '裂天.png',
     fusionResonance: { name: '爆炎裂天', effect: '爆炎翼衝過載值提升至+30%，星核過載攻擊倍率提升至400%' },
     hasFullData: true,
     fusion: {
@@ -527,7 +527,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'thunder',
     rarity: 5,
     stats: { atk: 78, def: 65, spd: 88, starcore: 88 },
-    image: '弧雷風暴_雷霆獅鷲設計圖.png',
+    image: '電鬣.png',
     fusionResonance: { name: '雷獄天羅', effect: '雷獄電磁牢籠範圍擴大至全體敵方，電磁感知網提前曝光回合+1' },
     hasFullData: true,
     fusion: {
@@ -551,7 +551,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'fusion',
     rarity: 5,
     stats: { atk: 68, def: 72, spd: 80, starcore: 90 },
-    image: '紫金星穹_奧秘獅身翼獸譜.png',
+    image: '典獄.png',
     fusionResonance: { name: '秘典天獄', effect: '秘典封印術冷卻+效果延長至+4回合，有銀翼在場時遺忘術式效果再翻倍' },
     hasFullData: true,
     fusion: {
@@ -582,7 +582,7 @@ export const MOUNTS: readonly Mount[] = [
     coreAttr: 'fusion',
     rarity: 5,
     stats: { atk: 65, def: 68, spd: 82, starcore: 92 },
-    image: '星界秘典龍_天穹坐騎.png',
+    image: '典淵.png',
     fusionResonance: { name: '星域解析', effect: '星核術式解析曝光回合延長至5回合，符文陣列浮動範圍擴大至±45%' },
     hasFullData: true,
     fusion: {

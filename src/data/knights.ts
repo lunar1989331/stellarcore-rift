@@ -18,7 +18,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'independent',
     attr: '融合型·未知',
     coreAttr: 'fusion',
-    image: '銀翼·虛空.png', // 2026-09-19 素材重新命名（原為 紫月下的虛空騎士.png）
+    image: '銀翼·虛空.png',
     maxHp: 5500, // def 55 × 100
     atk: 78,
     def: 55,
@@ -71,7 +71,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '融合型·源核碎片',
     coreAttr: 'fusion',
-    image: '星環聖殿的天界騎士.png', // ASSET_MAP v1.1 校正（原為 星環聖殿的機甲王者.png；正確檔案實際存放於「坐騎篇」資料夾，已複製進 assets）
+    image: '聖冠.png',
     maxHp: 8000, // def 80 × 100（Mina Q8 原文範例）
     atk: 88,
     def: 80,
@@ -88,7 +88,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '聖光共鳴型',
     coreAttr: 'holy',
-    image: '聖光哥德巨鎧守護者.png',
+    image: '艾爾希亞·聖裁.png',
     maxHp: 7200, // def 72 × 100
     atk: 62,
     def: 72,
@@ -105,7 +105,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '太陽共鳴型',
     coreAttr: 'holy', // Q2：太陽 = 聖光子屬性
-    image: '黃金太陽守護者立於沙漠神殿.png',
+    image: '拉奧斯·日輝.png',
     maxHp: 8800, // def 88 × 100
     atk: 85,
     def: 88,
@@ -122,7 +122,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '風·生命共鳴型',
     coreAttr: 'wind', // Q2：中性，無弱點無特攻
-    image: '翡翠風暴中的天穹守衛.png',
+    image: '艾薇亞·翠嵐.png',
     maxHp: 6000, // def 60 × 100
     atk: 72,
     def: 60,
@@ -139,7 +139,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '月光共鳴型',
     coreAttr: 'holy', // Q2：與艾克隆（冥界）形成月光對鏡
-    image: '天界月光射手騎士.png',
+    image: '賽蓮娜·月弦.png',
     maxHp: 4800, // def 48 × 100
     atk: 82,
     def: 48,
@@ -173,7 +173,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '冰·獸性共鳴型',
     coreAttr: 'frost',
-    image: '冰霜狼騎士鎮守雪堡.png',
+    image: '佛雷爾·冰牙.png',
     maxHp: 7500, // def 75 × 100
     atk: 80,
     def: 75,
@@ -207,7 +207,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'guardian',
     attr: '風·鋼鐵共鳴型',
     coreAttr: 'wind', // Q2：中性
-    image: 'Stormbound Cathedral Mecha Guardian.png',
+    image: '薩爾汀·蒼壁.png',
     maxHp: 9500, // def 95 × 100
     atk: 65,
     def: 95,
@@ -226,7 +226,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '吞噬型·源核碎片',
     coreAttr: 'void', // Q2：BOSS，源核碎片持有者
-    image: '星穹聖殿中的鎧甲天王.png',
+    image: '索倫·星滅.png',
     maxHp: 9000, // def 90 × 100
     atk: 98,
     def: 90,
@@ -243,7 +243,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '血焰吞噬型',
     coreAttr: 'lava',
-    image: '末日猩紅惡魔騎士.png',
+    image: '瑪格諾斯·終焰.png',
     maxHp: 7200, // def 72 × 100
     atk: 95,
     def: 72,
@@ -260,7 +260,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '熔岩吞噬型',
     coreAttr: 'lava',
-    image: '地獄要塞火焰騎士.png',
+    image: '伊格尼斯·業火.png',
     maxHp: 5500, // def 55 × 100
     atk: 92,
     def: 55,
@@ -277,7 +277,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '冥界吞噬型',
     coreAttr: 'abyss',
-    image: '暗夜蝕月中的冥界騎士.png',
+    image: '艾克隆·蝕月.png',
     maxHp: 6200, // def 62 × 100
     atk: 78,
     def: 62,
@@ -294,7 +294,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '重力吞噬型',
     coreAttr: 'earth', // Q2：重力 = 大地子屬性，中性
-    image: '黑鎧巨騎降臨城堡鎮.png',
+    image: '莫德雷斯·黑鐵.png',
     maxHp: 8400, // def 84 × 100
     atk: 86,
     def: 84,
@@ -328,7 +328,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '爆炎吞噬型',
     coreAttr: 'void', // Q2：爆炎 = 虛空子屬性
-    image: '紅焰翼環機甲騎士.png',
+    image: '霍爾卡·烈翼.png',
     maxHp: 4800, // def 48 × 100
     atk: 94,
     def: 48,
@@ -345,7 +345,7 @@ export const KNIGHTS: readonly Knight[] = [
     faction: 'chaos',
     attr: '雷霆吞噬型',
     coreAttr: 'thunder',
-    image: '雷霆巨鎧騎士降臨廢墟.png',
+    image: '塞雷斯·雷獄.png',
     maxHp: 6800, // def 68 × 100
     atk: 75,
     def: 68,
@@ -363,7 +363,7 @@ export const KNIGHTS: readonly Knight[] = [
     attr: '大地·熔岩融合子屬性',
     // Q11（v2 覆核）：主屬性歸 earth，取代 MINA_ANSWERS.md Q2 原先給的 fusion。
     coreAttr: 'earth',
-    image: '猩紅隕環下的鋼鐵魔騎.png',
+    image: '格拉托斯·隕鐵.png',
     maxHp: 8800, // def 88 × 100
     atk: 90,
     def: 88,
